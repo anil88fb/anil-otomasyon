@@ -27,4 +27,5 @@ pip install --break-system-packages fonttools opencv-python-headless pillow nump
 
 ## Style presets used so far
 broadside (black hole), coral (lighthouse), cobalt-grid (moon), daisy-days (fingers), blue-professional (igloo),
-bold-poster (earth), blockframe (submarine), creative-mode (skyscraper).
+bold-poster (earth), blockframe (submarine), creative-mode (skyscraper), capsule (sneeze), cartesian (underwater tunnel),
+biennale-yellow (tickle), editorial-forest (sun disappears). All 13 presets used once; cycle again, least-recent first.
