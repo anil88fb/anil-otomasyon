@@ -4,7 +4,7 @@ Anıl Otomasyon
 
 ## Claude becerileri
 
-`.claude/skills/` klasöründe 80 beceri var. Claude Code bu depoda açıldığında bunları otomatik olarak tanır. Aynı beceriler `anil-otomasyon` eklentisi olarak Claude hesabına da yüklüdür (docx, pdf ve xlsx hariç; bunlar Claude'da yerleşik).
+`.claude/skills/` klasöründe 88 beceri var. Claude Code bu depoda açıldığında bunları otomatik olarak tanır. Aynı beceriler `anil-otomasyon` eklentisi olarak Claude hesabına da yüklüdür (docx, pdf ve xlsx hariç; bunlar Claude'da yerleşik).
 
 | Beceri | Kaynak |
 |---|---|
@@ -39,6 +39,13 @@ Anıl Otomasyon
 | `github-actions-templates` | wshobson/agents |
 | `huggingface-best` | huggingface/skills |
 | `huggingface-gradio` | huggingface/skills |
+| `hyperframes` | calesthio/openmontage |
+| `hyperframes-animation` | calesthio/openmontage |
+| `hyperframes-cli` | calesthio/openmontage |
+| `hyperframes-core` | calesthio/openmontage |
+| `hyperframes-creative` | calesthio/openmontage |
+| `hyperframes-media` | calesthio/openmontage |
+| `hyperframes-registry` | calesthio/openmontage |
 | `image-enhancer` | ComposioHQ/awesome-claude-skills |
 | `interaction-design` | wshobson/agents |
 | `lead-research-assistant` | ComposioHQ/awesome-claude-skills |
@@ -51,6 +58,7 @@ Anıl Otomasyon
 | `mobile-release` | alirezarezvani/claude-skills |
 | `modern-python` | trailofbits/skills |
 | `moviepy` | digitalsamba/claude-code-video-toolkit |
+| `music-to-video` | calesthio/openmontage |
 | `nodejs-backend-patterns` | wshobson/agents |
 | `notebooklm` | alirezarezvani/claude-skills |
 | `parody-short` | digitalsamba/claude-code-video-toolkit |
@@ -89,4 +97,11 @@ Anıl Otomasyon
 | `youtube-full` | alirezarezvani/claude-skills |
 | `youtube-stats` | digitalsamba/claude-code-video-toolkit |
 
-Her becerinin lisansı kendi kaynak deposundaki lisanstır. anthropics/skills içindeki docx, pdf ve xlsx kaynağı açık (source-available) ama açık kaynak değil; sadece kişisel kullanım içindir. `assistant-coach` aslen `claude-coach` adındadır; beceri adlarında "claude" kelimesi kullanılamadığı için yeniden adlandırıldı. youtube-stats, video-design, parody-short ve moviepy becerilerinin kullandığı araç dosyaları, kaynak deponun ana klasöründen becerinin kendi `tools/` klasörüne kopyalandı. Remotion ticari kullanımda belirli büyüklüğün üzerindeki şirketler için ücretli lisans ister.
+## Notlar
+
+- Her becerinin lisansı kendi kaynak deposundaki lisanstır. anthropics/skills içindeki docx, pdf ve xlsx kaynağı açık (source-available) ama açık kaynak değil; sadece kişisel kullanım içindir.
+- calesthio/openmontage kaynaklı beceriler (HyperFrames ailesi, music-to-video, manim-composer) AGPL-3.0 lisanslıdır: kişisel kullanımda serbest, ama değiştirip başkalarına dağıtırsan ya da hizmet olarak sunarsan kaynak kodunu paylaşman gerekir.
+- `assistant-coach` aslen `claude-coach` adındadır; beceri adlarında "claude" kelimesi kullanılamadığı için yeniden adlandırıldı.
+- youtube-stats, video-design, parody-short ve moviepy becerilerinin kullandığı araç dosyaları, kaynak deponun ana klasöründen becerinin kendi `tools/` klasörüne kopyalandı.
+- hyperframes-animation içindeki iki büyük örnek video (36 MB) hiçbir yerde kullanılmadığı için çıkarıldı.
+- Remotion ticari kullanımda belirli büyüklüğün üzerindeki şirketler için ücretli lisans ister.
