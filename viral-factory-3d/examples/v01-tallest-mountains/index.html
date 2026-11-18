@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:M;src:url(/node_modules/@fontsource/montserrat/files/montserrat-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:M;src:url(/node_modules/@fontsource/montserrat/files/montserrat-latin-800-normal.woff2);font-weight:800}
+body{margin:0;background:#000}
+canvas{display:block}
+</style></head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W=1080,H=1920;
+const TIMING = await (await fetch('timing.json')).json();
+const SCRIPT = await (await fetch('script.json')).json();
+const SEG = TIMING.segments;
+
+// ---------- noise ----------
+function hash(x,y){let h=x*374761393+y*668265263;h=(h^(h>>>13))*1274126177;return ((h^(h>>>16))>>>0)/4294967295;}
+function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
+ const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+ const a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);
+ return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function ridged(x,y){let s=0,a=1,f=1,n=0;for(let i=0;i<5;i++){let r=1-Math.abs(vnoise(x*f,y*f)*2-1);s+=r*r*a;n+=a;a*=.5;f*=2.03;}return s/n;}
+
+// ---------- renderer ----------
+const glc=document.createElement('canvas');glc.width=W;glc.height=H;
+const renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H,false);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,W/H,0.5,3000);
+
+// sky dome
+const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{top:{value:new THREE.Color('#2a5fbf')},bot:{value:new THREE.Color('#ffd9b0')}},
+ vertexShader:`varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+ fragmentShader:`uniform vec3 top,bot;varying vec3 p;void main(){float h=clamp(p.y*1.6+.05,0.,1.);gl_FragColor=vec4(mix(bot,top,pow(h,.7)),1.);}`});
+const sky=new THREE.Mesh(new THREE.SphereGeometry(1500,32,16),skyMat);scene.add(sky);
+scene.fog=new THREE.Fog('#f3d2b4',260,900);
+
+const sun=new THREE.DirectionalLight('#fff1dc',2.6);sun.position.set(-120,90,80);scene.add(sun);
+scene.add(new THREE.HemisphereLight('#c8dcff','#6a5640',1.6));
+
+// ---------- himalaya group ----------
+const PEAKS=[ // rank order 5..1, meters, x,z
+ {n:'Makalu',m:8485,x:52,z:6,ang:1.7},
+ {n:'Lhotse',m:8516,x:24,z:12,ang:2.4},
+ {n:'Kangchenjunga',m:8586,x:112,z:-8,ang:1.5},
+ {n:'K2',m:8611,x:-118,z:-12,ang:2.0},
+ {n:'Mount Everest',m:8849,x:18,z:-2,ang:2.0},
+];
+PEAKS.forEach(p=>{p.y=(p.m-3000)/100;});
+function Hh(x,z){
+ const band=Math.exp(-Math.pow(z/75,2));
+ let h=2+band*(6+ridged(x*0.018+3,z*0.018)*34)+ (1-band)*ridged(x*.01,z*.01)*6;
+ for(const p of PEAKS){const d=Math.hypot(x-p.x,z-p.z);
+  const r=17*(0.85+0.3*vnoise(x*.08,z*.08));
+  const c=p.y*Math.exp(-Math.pow(d/r,1.25))*(0.93+0.07*ridged(x*.09,z*.09));
+  h=Math.max(h,c);}
+ return h;}
+const him=new THREE.Group();scene.add(him);
+{
+ const g=new THREE.PlaneGeometry(520,300,300,180);g.rotateX(-Math.PI/2);
+ const pos=g.attributes.position;const col=[];const c=new THREE.Color();
+ for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,Hh(x,z));}
+ g.computeVertexNormals();const nrm=g.attributes.normal;
+ for(let i=0;i<pos.count;i++){const y=pos.getY(i),sl=1-nrm.getY(i);const j=vnoise(pos.getX(i)*.3,pos.getZ(i)*.3)*.06;
+  if(y>34-sl*14+j*40&&sl<0.55)c.set('#f4f7fb');
+  else if(y>20||sl>0.45)c.set(sl>0.5?'#5d5550':'#7a7068');
+  else if(y>10)c.set('#7c6a4f');
+  else c.set('#5f7a3c');
+  c.offsetHSL(0,0,j-0.03);col.push(c.r,c.g,c.b);}
+ g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+ for(const p of PEAKS){let mx=0;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);if(Math.abs(x-p.x)<6&&Math.abs(z-p.z)<6)if(pos.getY(i)>mx){mx=pos.getY(i);p.tx=x;p.tz=z;}}p.top=mx;}
+ const m=new THREE.Mesh(g.toNonIndexed(),new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.95}));
+ m.geometry.computeVertexNormals();him.add(m);
+ // clouds
+ const cm=new THREE.MeshStandardMaterial({color:'#ffffff',flatShading:true,roughness:1,transparent:true,opacity:.92});
+ window.clouds=[];
+ for(let i=0;i<22;i++){const cl=new THREE.Group();const n=3+Math.floor(hash(i,7)*4);
+  for(let k=0;k<n;k++){const s=2.5+hash(i,k)*3;const b=new THREE.Mesh(new THREE.IcosahedronGeometry(s,1),cm);b.position.set(k*s*1.1-n*3,hash(k,i)*3,hash(i+k,3)*5);b.scale.y=.6;cl.add(b);}
+  cl.position.set(-240+hash(i,1)*480,20+hash(i,2)*10,-110+hash(i,3)*220);cl.userData.v=1+hash(i,5)*2;him.add(cl);clouds.push(cl);}
+}
+
+// ---------- mauna kea group ----------
+const mk=new THREE.Group();mk.visible=false;scene.add(mk);
+const SEA=0, FLOOR=-60, MKTOP=42;
+{
+ const pts=[];for(let i=0;i<=40;i++){const t=i/40;const y=FLOOR+(MKTOP-FLOOR)*t;const r=115*Math.pow(1-t,1.5)+6;pts.push(new THREE.Vector2(r,y));}
+ pts.push(new THREE.Vector2(0,MKTOP));
+ const g=new THREE.LatheGeometry(pts.reverse(),72);const pos=g.attributes.position;const col=[];const c=new THREE.Color();
+ for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);const n=vnoise(x*.12+9,z*.12)*3+ridged(x*.05,z*.05)*4;
+  const r=Math.hypot(x,z);if(r>1){pos.setX(i,x*(1+n/r*.6));pos.setZ(i,z*(1+n/r*.6));}pos.setY(i,y+n*.6);
+  if(y>32)c.set('#9b5a3a');else if(y>4)c.set('#4f6b34');else if(y>-4)c.set('#c9b48a');else c.set('#6b6358');
+  c.offsetHSL(0,0,vnoise(x*.4,z*.4)*.08-.04);col.push(c.r,c.g,c.b);}
+ g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+ const m=new THREE.Mesh(g.toNonIndexed(),new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.95}));m.geometry.computeVertexNormals();mk.add(m);
+ const fl=new THREE.Mesh(new THREE.PlaneGeometry(900,900,40,40).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:'#2b3340',flatShading:true}));fl.position.y=FLOOR-1;mk.add(fl);
+ window.waterMat=new THREE.MeshStandardMaterial({color:'#1f7bd1',transparent:true,opacity:.55,roughness:.2,metalness:.1,depthWrite:false});
+ const wb=new THREE.Mesh(new THREE.BoxGeometry(700,SEA-FLOOR,500),waterMat);wb.position.set(0,(SEA+FLOOR)/2,-60);mk.add(wb);
+ window.surfMat=new THREE.MeshStandardMaterial({color:'#4fb3ff',transparent:true,opacity:.75,roughness:.15,flatShading:true});
+ const sg=new THREE.PlaneGeometry(700,500,60,40).rotateX(-Math.PI/2);window.surf=new THREE.Mesh(sg,surfMat);surf.position.set(0,SEA+.05,-60);mk.add(surf);
+ window.surfBase=Float32Array.from(sg.attributes.position.array);
+}
+
+// ---------- camera choreography ----------
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+function peakPose(p,t){const a=p.ang+t*0.07;const d=62;return {pos:V(p.x+Math.cos(a)*d,p.y*0.92,p.z+Math.sin(a)*d),tgt:V(p.x,p.y*0.78,p.z)};}
+function poseFor(i,t){ // t = seconds into segment
+ if(i===0){return {pos:V(-60+t*6,150-t*4,210-t*6),tgt:V(10,18,0)};}
+ if(i>=1&&i<=5)return peakPose(PEAKS[i-1],t);
+ return null;}
+const ease=x=>x<0?0:x>1?1:x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+function segIndex(t){let k=0;for(const s of SEG)if(t>=s.start-0.35)k=s.i;return k;}
+
+// ---------- overlay ----------
+const out=document.getElementById('out');const ctx=out.getContext('2d');
+function txt(s,x,y,size,fill='#fff',align='center',w=900,stroke=14){ctx.font=`900 ${size}px M`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.lineJoin='round';
+ if(stroke){ctx.lineWidth=stroke;ctx.strokeStyle='rgba(0,0,0,.85)';ctx.strokeText(s,x,y,w);}ctx.fillStyle=fill;ctx.fillText(s,x,y,w);}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+function pop(x){if(x<=0)return 0;if(x>=1)return 1;return 1+2.2*Math.pow(x-1,3)+1.2*Math.pow(x-1,2);}
+
+// captions: chunk words of each line
+const CAP=[];SCRIPT.lines.forEach((l,i)=>{const s=SEG[i];const words=(l.cap||l.say).split(/\s+/);const wt=w=>/\d/.test(w)?w.length*3.2:w.length+1;
+ const total=words.reduce((a,w)=>a+wt(w),0);let acc=0;const ws=words.map(w=>{const st=s.start+(s.end-s.start)*acc/total;acc+=wt(w);return {w,st,en:s.start+(s.end-s.start)*acc/total};});
+ for(let k=0;k<ws.length;k+=3)CAP.push(ws.slice(k,k+3));});
+function drawCaption(t){const c=CAP.find(c=>t>=c[0].st&&t<c[c.length-1].en+0.15);if(!c)return;
+ const y=segIndex(t)>=6?1545:1430;ctx.font='900 78px M';const parts=c.map(o=>o.w.toUpperCase());const sp=24;
+ const widths=parts.map(p=>ctx.measureText(p).width);const tot=widths.reduce((a,b)=>a+b,0)+sp*(parts.length-1);let x=W/2-Math.min(tot,1000)/2;const sc=Math.min(1,1000/tot);
+ const k0=pop((t-c[0].st)/0.18);ctx.save();ctx.translate(W/2,y);ctx.scale(sc*(0.85+0.15*k0),sc*(0.85+0.15*k0));ctx.translate(-W/2,-y);
+ x=W/2-tot/2;parts.forEach((p,j)=>{const on=t>=c[j].st&&t<c[j].en+0.05;txt(p,x+widths[j]/2,y,78,on?'#ffd400':'#ffffff','center',2000,16);x+=widths[j]+sp;});ctx.restore();}
+
+function project(v){const p=v.clone().project(camera);return {x:(p.x+1)/2*W,y:(1-p.y)/2*H,z:p.z};}
+
+function drawPeakCard(i,t,s){const p=PEAKS[i-1];const lt=t-s.start;const k=pop(lt/0.45);if(k<=0)return;
+ let best=null;{const g=him.children[0].geometry.attributes.position;}const top=project(V(p.tx??p.x,p.top+0.3,p.tz??p.z));const cx=W/2,cy=330;
+ // leader line
+ if(top.z<1){ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=5;ctx.setLineDash([14,10]);ctx.beginPath();ctx.moveTo(top.x,top.y);ctx.lineTo(cx,cy+150*k);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#ffd400';ctx.beginPath();ctx.arc(top.x,top.y,14,0,7);ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=4;ctx.stroke();}
+ ctx.save();ctx.translate(cx,cy);ctx.scale(k,k);
+ ctx.fillStyle='rgba(10,18,40,.82)';rr(-430,-150,860,300,46);ctx.fill();ctx.strokeStyle='#ffd400';ctx.lineWidth=6;ctx.stroke();
+ const rank=6-i;ctx.fillStyle=rank===1?'#ffd400':'#ff5a3c';ctx.beginPath();ctx.arc(-300,0,105,0,7);ctx.fill();
+ txt('#'+rank,-300,6,96,rank===1?'#111':'#fff','center',200,0);
+ txt(p.n.toUpperCase(),110,-55,p.n.length>10?62:80,'#fff','center',560,0);
+ const cnt=Math.min(1,Math.max(0,(lt-0.5)/1.6));const val=p.m*(1-Math.pow(1-cnt,3));
+ txt(fmt(val)+' m',110,60,104,'#ffd400','center',560,0);
+ ctx.restore();}
+
+function drawHeader(t){ // 5 progress dots
+ const i=segIndex(t);if(i<1||i>5)return;ctx.save();
+ for(let k=0;k<5;k++){const x=W/2-160+k*80,y=96;const done=k<i;ctx.fillStyle=done?'#ffd400':'rgba(255,255,255,.35)';ctx.beginPath();ctx.arc(x,y,done&&k===i-1?20:14,0,7);ctx.fill();}
+ ctx.restore();}
+
+function drawIntro(t){const s=SEG[0];const lt=t-0.2;if(t>s.end+0.3)return;const k=pop(lt/0.5);const fade=Math.min(1,(s.end+0.3-t)/0.4);
+ ctx.save();ctx.globalAlpha=fade;ctx.translate(W/2,380);ctx.scale(k,k);
+ txt("EARTH'S",0,-150,96,'#fff');txt('5 TALLEST',0,-20,150,'#ffd400','center',1000,18);txt('MOUNTAINS',0,120,124,'#fff','center',1000,18);ctx.restore();}
+
+function drawMK(t){const s=SEG[6];const lt=t-s.start;if(lt<0)return;
+ const k=pop(lt/0.45);ctx.save();ctx.translate(W/2,250);ctx.scale(k,k);txt('MAUNA KEA',0,0,120,'#ffd400','center',1000,18);txt('HAWAII',0,105,60,'#fff');ctx.restore();
+ // horizontal comparison panel
+ const b=Math.min(1,Math.max(0,(lt-2.6)/1.3));if(b<=0)return;const bb=1-Math.pow(1-b,3);
+ const px=90,py=1090,pw=900,ph=300,sc=780/10210;
+ ctx.fillStyle='rgba(10,18,40,.8)';rr(px-20,py-20,pw+40,ph+40,36);ctx.fill();
+ const rows=[{n:'EVEREST',m:8849,c:'#dfe7f0',y:py+60},{n:'MAUNA KEA',m:10210,c:'#ffd400',y:py+200}];
+ for(const r of rows){const w=r.m*sc*bb;ctx.fillStyle=r.c;rr(px+40,r.y-30,w,60,14);ctx.fill();
+  if(r.m===10210){const ws=6003*sc*bb;ctx.fillStyle='#1f7bd1';rr(px+40,r.y-30,ws,60,[14,0,0,14]);ctx.fill();
+   if(b>=1){txt('UNDER SEA',px+40+ws/2,r.y+2,30,'#fff','center',300,0);}}
+  txt(r.n,px+40,r.y-62,38,'#fff','left',400,6);txt(fmt(r.m*bb)+' m',px+pw-20,r.y-62,44,r.c,'right',400,8);}
+}
+function drawOutro(t){const s=SEG[7];const lt=t-s.start+0.2;if(lt<0)return;const k=pop(lt/0.4);
+ ctx.save();ctx.translate(W/2,1730);ctx.scale(k,k);ctx.fillStyle='#ff2b2b';rr(-330,-70,660,140,70);ctx.fill();txt('SUBSCRIBE',0,4,78,'#fff','center',600,0);ctx.restore();}
+
+// ---------- frame ----------
+let prev=null;
+window.renderAt=function(t){
+ const i=segIndex(t);
+ const inMK=i>=6;him.visible=!inMK;mk.visible=inMK;
+ if(inMK){scene.fog.near=500;scene.fog.far=1600;skyMat.uniforms.bot.value.set('#bfe8ff');skyMat.uniforms.top.value.set('#2a7fd8');}
+ else{scene.fog.near=260;scene.fog.far=900;skyMat.uniforms.bot.value.set('#ffd9b0');skyMat.uniforms.top.value.set('#2a5fbf');}
+ // camera
+ if(!inMK){const s=SEG[i];const lt=t-(s.start-0.35);const cur=poseFor(i,lt);
+  let pos=cur.pos,tgt=cur.tgt;
+  if(i>0){const ps=SEG[i-1];const pv=poseFor(i-1,(s.start-0.35)-(ps.start-0.35));const dist=pv.pos.distanceTo(cur.pos);const dur=Math.min(2.0,0.9+dist/220);const e=ease(lt/dur);
+   pos=pv.pos.clone().lerp(cur.pos,e);tgt=pv.tgt.clone().lerp(cur.tgt,e);pos.y+=Math.sin(Math.PI*e)*Math.min(60,dist*.25);}
+  camera.position.copy(pos);camera.lookAt(tgt);
+  for(const c of clouds){c.position.x=((c.position.x+240+0)%480)-240;}
+  clouds.forEach((c,k)=>{c.position.x=-240+((hash(k,1)*480+t*c.userData.v*3)%480);});
+ } else {const lt=t-(SEG[6].start-0.35);
+  const e=ease(lt/3.2);const a=-0.35+lt*0.03;const d=330+e*90;const y=40-e*52;
+  camera.position.set(Math.sin(a)*d,y,Math.cos(a)*d);camera.lookAt(0,10-e*32,0);
+  waterMat.opacity=0.92-0.62*ease((lt-0.8)/2.2);surfMat.opacity=0.85-0.35*ease((lt-0.8)/2.2);
+  const p=surf.geometry.attributes.position;for(let k=0;k<p.count;k++){const x=surfBase[k*3],z=surfBase[k*3+2];p.setY(k,Math.sin(x*.05+t*1.6)*.8+Math.cos(z*.07+t*1.2)*.6);}p.needsUpdate=true;surf.geometry.computeVertexNormals();}
+ camera.updateMatrixWorld();renderer.render(scene,camera);
+ ctx.drawImage(glc,0,0);
+ // vignette
+ const g=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.45)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ drawIntro(t);drawHeader(t);
+ if(i>=1&&i<=5)drawPeakCard(i,t,SEG[i]);
+ if(i>=6)drawMK(t);if(i>=7)drawOutro(t);
+ drawCaption(t);
+ return out.toDataURL('image/jpeg',0.9);
+};
+await document.fonts.load('900 40px M');await document.fonts.load('800 40px M');
+window.READY=true;
+</script></body></html>

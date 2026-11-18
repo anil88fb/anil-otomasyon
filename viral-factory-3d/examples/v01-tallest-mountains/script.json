@@ -1,0 +1,49 @@
+{
+ "voice": "af_heart",
+ "speed": 1.08,
+ "lines": [
+  {
+   "say": "Where is the roof of the world? Let's fly over Earth's five tallest mountains.",
+   "caption": "Where is the roof of the world?",
+   "pause_before": 0.3,
+   "cap": "Where is the roof of the world? Let's fly over Earth's five tallest mountains."
+  },
+  {
+   "say": "Number five. Makalu. Eight thousand, four hundred eighty-five meters.",
+   "caption": "#5 Makalu",
+   "cap": "Number five. Makalu. 8,485 meters."
+  },
+  {
+   "say": "Number four. Lhotse, Everest's next-door neighbor. Eight thousand, five hundred sixteen meters.",
+   "caption": "#4 Lhotse",
+   "cap": "Number four. Lhotse, Everest's next-door neighbor. 8,516 meters."
+  },
+  {
+   "say": "Number three. Kangchenjunga. Eight thousand, five hundred eighty-six meters.",
+   "caption": "#3 Kangchenjunga",
+   "cap": "Number three. Kangchenjunga. 8,586 meters."
+  },
+  {
+   "say": "Number two. K2, the savage mountain. Eight thousand, six hundred eleven meters.",
+   "caption": "#2 K2",
+   "cap": "Number two. K2, the savage mountain. 8,611 meters."
+  },
+  {
+   "say": "And number one. Mount Everest. Eight thousand, eight hundred forty-nine meters.",
+   "caption": "#1 Everest",
+   "cap": "And number one. Mount Everest. 8,849 meters."
+  },
+  {
+   "say": "But measure from the base, and Hawaii's Mauna Kea wins. Over ten thousand meters, mostly hidden under the sea.",
+   "caption": "Mauna Kea",
+   "pause_before": 0.4,
+   "cap": "But measure from the base, and Hawaii's Mauna Kea wins. Over 10,000 meters, mostly hidden under the sea."
+  },
+  {
+   "say": "Subscribe for more whys.",
+   "caption": "Subscribe for more whys",
+   "pause_before": 0.3,
+   "cap": "Subscribe for more whys."
+  }
+ ]
+}
