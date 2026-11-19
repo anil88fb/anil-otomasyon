@@ -15,7 +15,16 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 
 - `tts.py`: `script.json` → `voice.wav` + `timing.json` (segment start/end; scene timing follows the voice).
 - `render.py`: serves this folder on localhost, calls `renderAt(t)` per frame, pipes JPEGs to ffmpeg. ~0.35 s/frame on 2 CPUs.
-- `sfx.py`: music (chord pad, arpeggio, kick) ducked under the voice, plus whoosh/ding/riser/boom on segment changes. The second argument is a random seed.
+- `sfx.py`: music (chord pad, arpeggio, kick, hat) ducked under the voice, plus effects (whoosh, ding, ping, splash, rush, clunk, chime, riser, boom, bubbles). Put a `music.json` in the video folder to set bpm, chords, instrument and the effect plan per segment (see the docstring); without it the v01 plan is used. The second argument is a random seed.
+- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka (`/node_modules/@fontsource/<name>/files/...`).
+
+## Videos made
+
+| folder | title | look | voice |
+|---|---|---|---|
+| examples/v01-tallest-mountains | Earth's 5 Tallest Mountains | Himalaya flyover, Montserrat yellow cards | af_heart |
+| videos/v02-ocean-depth | How Deep Is the Ocean? | probe dive + Everest cutaway, cyan sonar HUD, Bebas/Space Grotesk | am_michael |
+| videos/v03-canal-locks | How Do Canal Locks Work? | sunny diorama cutaway, orange stickers, Fredoka | bf_emma |
 
 ## Channel rules (standing decisions)
 

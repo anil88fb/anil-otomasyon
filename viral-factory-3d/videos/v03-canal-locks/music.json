@@ -1,0 +1,22 @@
+{
+ "bpm": 112, "chords": [[62,66,69],[57,61,64],[59,62,66],[55,59,62]],
+ "pad": 0.035, "arp": 0.055, "pluck": "square", "kick": 0.18, "hat": 0.05,
+ "arp_pattern": [0,1,2,1,3,2,1,2], "music_gain": 0.5, "whoosh_all": 0.3,
+ "fx": [
+  {"type":"chime","seg":0,"at":0.2,"gain":0.25},
+  {"type":"clunk","seg":1,"at":3.9,"gain":0.5},
+  {"type":"rush","seg":2,"at":0.9,"dur":8.5,"gain":0.22},
+  {"type":"bubbles","seg":2,"at":1.6,"dur":4.0,"gain":0.25},
+  {"type":"ding","seg":3,"at":2.5,"gain":0.22,"freq":1568},
+  {"type":"clunk","seg":4,"at":0.0,"gain":0.4},
+  {"type":"rush","seg":4,"at":1.2,"dur":0.9,"gain":0.2},
+  {"type":"clunk","seg":4,"at":2.0,"gain":0.4},
+  {"type":"rush","seg":4,"at":2.8,"dur":0.9,"gain":0.2},
+  {"type":"clunk","seg":4,"at":3.6,"gain":0.4},
+  {"type":"ding","seg":4,"at":3.9,"gain":0.25,"freq":2093},
+  {"type":"riser","seg":5,"at":-1.2,"dur":1.2,"gain":0.3},
+  {"type":"rush","seg":5,"at":0.4,"dur":3.4,"gain":0.2},
+  {"type":"boom","seg":5,"at":3.0,"gain":0.45},
+  {"type":"chime","seg":6,"at":0.1,"gain":0.3}
+ ]
+}

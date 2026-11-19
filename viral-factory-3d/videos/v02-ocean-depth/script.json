@@ -1,0 +1,19 @@
+{
+ "voice": "am_michael",
+ "speed": 1.05,
+ "lines": [
+  {"say": "Drop a camera into the ocean. How far down can it really go?", "caption": "How deep is the ocean?", "pause_before": 0.3,
+   "cap": "Drop a camera into the ocean. How far down can it really go?"},
+  {"say": "Two hundred meters. Sunlight is almost gone.", "caption": "200 m",
+   "cap": "200 meters. Sunlight is almost gone."},
+  {"say": "Two thousand, nine hundred ninety-two meters. The deepest dive ever recorded by a mammal, a Cuvier's beaked whale.", "caption": "2,992 m",
+   "cap": "2,992 meters. The deepest dive ever recorded by a mammal, a Cuvier's beaked whale."},
+  {"say": "Three thousand, eight hundred meters. The Titanic rests here, in total darkness.", "caption": "3,800 m",
+   "cap": "3,800 meters. The Titanic rests here, in total darkness."},
+  {"say": "And it keeps going. Ten thousand, nine hundred thirty-five meters. Challenger Deep, the bottom of the Mariana Trench.", "caption": "10,935 m", "pause_before": 0.35,
+   "cap": "And it keeps going. 10,935 meters. Challenger Deep, the bottom of the Mariana Trench."},
+  {"say": "Drop Mount Everest in here, and its peak would still be two kilometers underwater.", "caption": "Everest", "pause_before": 0.35,
+   "cap": "Drop Mount Everest in here, and its peak would still be 2 kilometers underwater."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}

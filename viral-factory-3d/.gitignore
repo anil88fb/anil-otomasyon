@@ -1,7 +1,7 @@
 node_modules/
-*/video*.mp4
-*/final.mp4
-*/*.wav
-*/still_*.jpg
-*/sheet*.jpg
-examples/*/timing.json
+**/video*.mp4
+**/final.mp4
+**/*.wav
+**/still_*.jpg
+**/sheet*.jpg
+**/timing.json

@@ -1,0 +1,19 @@
+{
+ "voice": "bf_emma",
+ "speed": 1.06,
+ "lines": [
+  {"say": "How do you lift a giant ship twenty-six meters up, with no pumps at all? Here's how the Panama Canal does it.", "caption": "How do canal locks work?", "pause_before": 0.3,
+   "cap": "How do you lift a giant ship 26 meters up, with no pumps at all? Here's how the Panama Canal does it."},
+  {"say": "The ship sails into a giant concrete box called a lock, and the gates close behind it.", "caption": "The lock",
+   "cap": "The ship sails into a giant concrete box called a lock, and the gates close behind it."},
+  {"say": "Valves open, and water from the lake above pours in through huge tunnels. Only gravity does the work.", "caption": "Gravity",
+   "cap": "Valves open, and water from the lake above pours in through huge tunnels. Only gravity does the work."},
+  {"say": "In under ten minutes, the water rises, and the ship rises with it.", "caption": "Rising",
+   "cap": "In under ten minutes, the water rises, and the ship rises with it."},
+  {"say": "Three steps like this, and the ship floats on Gatun Lake, twenty-six meters above the sea.", "caption": "Gatun Lake",
+   "cap": "Three steps like this, and the ship floats on Gatun Lake, 26 meters above the sea."},
+  {"say": "The catch? Every ship that crosses uses about two hundred million liters of fresh water.", "caption": "200 million liters", "pause_before": 0.35,
+   "cap": "The catch? Every ship that crosses uses about 200 million liters of fresh water."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}
