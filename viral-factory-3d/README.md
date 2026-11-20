@@ -38,4 +38,4 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 
 ## Upload
 
-`vidiq_video_upload` needs a public HTTPS URL; the cloud session cannot reach file hosts. Working routes: the vidIQ file picker (`vidiq_file_upload`, the user selects the file), or the user's Chrome with the Claude extension (YouTube Studio / vidIQ upload page).
+The cloud session cannot send local files to vidIQ (`localFile` is refused) and file-sharing sites are blocked. Working route (since 2026-11-20): the repo is public, so push each `final.mp4` as `<slug>.mp4` to the `shorts-media` branch, check `https://raw.githubusercontent.com/anil88fb/anil-otomasyon/shorts-media/<slug>.mp4` returns 200, then `vidiq_video_upload` with that `url` → draft → publish (scheduled). If the repo is private again the raw URL returns 404; then fall back to the vidIQ file picker (`vidiq_file_upload`).
