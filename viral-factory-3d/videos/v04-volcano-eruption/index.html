@@ -245,7 +245,7 @@ window.renderAt=function(t){
   if(et>0){const k=pop(et/0.3);ctx.save();ctx.translate(W/2,420);ctx.rotate(-0.06);ctx.scale(k*(1+0.05*Math.sin(t*30)*Math.exp(-et*2)),k);
    const g=ctx.createLinearGradient(0,-120,0,120);g.addColorStop(0,'#fff3b0');g.addColorStop(.5,YEL);g.addColorStop(1,HOT);txt('BOOM!',0,0,300,g,'center',1000,26,INK);ctx.restore();}}
  if(i===5){const lt=t-S[5].start;tag(['RUNNY MAGMA','GAS ESCAPES GENTLY'],W/2,300,pop((lt-0.2)/0.4),66,YEL);
-  const k=pop((lt-3.4)/0.4);if(k>0){const v=Math.round(lerp(0,800,ease((lt-3.5)/1.2))),v2=Math.round(lerp(0,1200,ease((lt-4.4)/1.3)));
+  const k=pop((lt-3.4)/0.4);if(k>0){const ce=ease((lt-3.5)/1.6);const v=Math.round(lerp(0,800,ce)/10)*10,v2=Math.round(lerp(0,1200,ce)/10)*10;
    ctx.save();ctx.translate(W/2,560);ctx.scale(k,k);ctx.fillStyle='rgba(20,10,18,.88)';rr(-430,-105,860,210,24);ctx.fill();ctx.strokeStyle=HOT;ctx.lineWidth=6;ctx.stroke();
    const g=ctx.createLinearGradient(0,-80,0,80);g.addColorStop(0,YEL);g.addColorStop(1,HOT);
    txt(v.toLocaleString('en-US')+' – '+v2.toLocaleString('en-US')+' °C',0,-10,140,g,'center',820);txt('LAVA TEMPERATURE',0,72,46,'#fff','center',820);ctx.restore();}}
