@@ -1,0 +1,19 @@
+{
+ "voice": "af_bella",
+ "speed": 1.08,
+ "lines": [
+  {"say": "Five facts about octopuses that sound made up, but are completely true.", "caption": "5 octopus facts", "pause_before": 0.3,
+   "cap": "Five facts about octopuses that sound made up, but are completely true."},
+  {"say": "One. An octopus has three hearts. Two pump blood through the gills, and one pumps it around the body.", "caption": "Three hearts",
+   "cap": "One. An octopus has three hearts. Two pump blood through the gills, and one pumps it around the body."},
+  {"say": "Two. Its blood is blue, thanks to a copper-based protein called hemocyanin.", "caption": "Blue blood",
+   "cap": "Two. Its blood is blue, thanks to a copper-based protein called hemocyanin."},
+  {"say": "Three. About two thirds of its neurons are in its arms, so each arm can feel and taste on its own.", "caption": "Smart arms",
+   "cap": "Three. About two thirds of its neurons are in its arms, so each arm can feel and taste on its own."},
+  {"say": "Four. It has no bones, so it can squeeze through any gap bigger than its hard beak.", "caption": "No bones",
+   "cap": "Four. It has no bones, so it can squeeze through any gap bigger than its hard beak."},
+  {"say": "Five. It can change its color and even its skin texture in an instant, and vanish into the reef.", "caption": "Camouflage",
+   "cap": "Five. It can change its color and even its skin texture in an instant, and vanish into the reef."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}

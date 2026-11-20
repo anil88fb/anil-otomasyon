@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:G;src:url(/node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:G;src:url(/node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-500-normal.woff2);font-weight:500}
+body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W=1080,H=1920;
+const TIMING=await (await fetch('timing.json')).json();
+const SCRIPT=await (await fetch('script.json')).json();
+const SEG=TIMING.segments,S=SEG;
+// v05 "The World's 5 Tallest Buildings" — neon night city, towers rise one by one, Jeddah Tower ghost at the end.
+
+function hash(x,y){let h=(x|0)*374761393+(y|0)*668265263;h=(h^(h>>>13))*1274126177;return ((h^(h>>>16))>>>0)/4294967295;}
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>x<=0?0:x>=1?1:x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const eout=x=>x<=0?0:x>=1?1:1-Math.pow(1-x,3);
+const lerp=(a,b,k)=>a+(b-a)*k;
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+
+const glc=document.createElement('canvas');glc.width=W;glc.height=H;
+const renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H,false);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,W/H,2,25000);
+const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,vertexShader:`varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+ fragmentShader:`varying vec3 p;float h2(vec2 q){return fract(sin(dot(q,vec2(12.9898,78.233)))*43758.5453);}
+ void main(){float h=clamp(p.y*1.4+.05,0.,1.);vec3 c=mix(vec3(.55,.16,.45),vec3(.13,.08,.3),smoothstep(0.,.35,h));c=mix(c,vec3(.02,.02,.08),smoothstep(.35,1.,h));
+ vec2 q=floor(p.xz/max(.2,p.y+.3)*260.);float s=step(.9975,h2(q))*smoothstep(.15,.5,h);gl_FragColor=vec4(c+s*vec3(.9),1.);}`});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(9000,32,16),skyMat));
+scene.fog=new THREE.Fog('#2a1446',1800,7000);
+scene.add(new THREE.HemisphereLight('#6a7bff','#1a0f2a',0.9));
+const moon=new THREE.DirectionalLight('#b9c6ff',1.4);moon.position.set(-800,1200,900);scene.add(moon);
+const rim=new THREE.DirectionalLight('#ff4fb0',1.2);rim.position.set(1500,300,-800);scene.add(rim);
+
+// window textures
+function winTex(seed,warm){const c=document.createElement('canvas');c.width=128;c.height=256;const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,128,256);
+ for(let y=0;y<16;y++)for(let x=0;x<8;x++){const r=hash(x+seed*31,y+seed*17);if(r<0.55)continue;
+  g.fillStyle=r>.95?'#ffffff':(warm?(r>.8?'#ffd08a':'#ffb35c'):(r>.8?'#9fe8ff':'#5fb8ff'));g.globalAlpha=0.25+r*0.6;g.fillRect(x*16+3,y*16+4,10,8);}
+ g.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t;}
+const glass=(seed,warm,rx,ry,tint='#16223a',em=1.2)=>{const t=winTex(seed,warm);t.repeat.set(rx,ry);return new THREE.MeshStandardMaterial({color:tint,map:t,emissiveMap:t,emissive:'#ffffff',emissiveIntensity:em,roughness:.35,metalness:.6,flatShading:true});};
+const solid=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.5,metalness:.3},o));
+const neon=c=>new THREE.MeshBasicMaterial({color:c});
+
+// ground + roads
+const gTex=(()=>{const c=document.createElement('canvas');c.width=512;c.height=512;const g=c.getContext('2d');g.fillStyle='#0c0d1c';g.fillRect(0,0,512,512);
+ g.strokeStyle='#ffb84d';g.globalAlpha=.55;g.lineWidth=5;for(let k=0;k<=512;k+=128){g.beginPath();g.moveTo(k,0);g.lineTo(k,512);g.stroke();g.beginPath();g.moveTo(0,k);g.lineTo(512,k);g.stroke();}
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(40,40);t.colorSpace=THREE.SRGBColorSpace;return t;})();
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(16000,16000).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:'#ffffff',map:gTex,emissiveMap:gTex,emissive:'#ffffff',emissiveIntensity:.5,roughness:.9}));scene.add(ground);
+// filler city
+{const mats=[0,1,2,3,4,5].map(i=>glass(100+i,i%3===0,1,1,i%3?'#1a2238':'#221a33',0.55));
+ for(let i=0;i<900;i++){const x=-1800+hash(i,1)*5200,z=-3000+hash(i,2)*3800;if(z>-170&&z<170&&x>-250&&x<2000)continue;if(z>-100&&z<300)continue;
+  const w=30+hash(i,3)*50,d=30+hash(i,4)*50;const far=Math.max(0,-z-600)/2400;const h=25+Math.pow(hash(i,5),2.2)*(160+far*160);
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mats[i%6]);b.position.set(x,h/2,z);scene.add(b);
+  if(hash(i,6)>.85){const r=new THREE.Mesh(new THREE.BoxGeometry(w*.9,2,d*.9),neon(hash(i,7)>.5?'#ff3fa4':'#3ff0ff'));r.position.set(x,h+1,z);scene.add(r);}}}
+
+// ---------- towers (1 unit = 1 m) ----------
+const XS=[0,330,660,990,1350];  // #5..#1
+const JX=1800;
+function twist(geo,amt,h){const p=geo.attributes.position;for(let i=0;i<p.count;i++){const y=p.getY(i)+h/2;const a=amt*y/h;const x=p.getX(i),z=p.getZ(i);p.setX(i,x*Math.cos(a)-z*Math.sin(a));p.setZ(i,x*Math.sin(a)+z*Math.cos(a));}geo.computeVertexNormals();return geo;}
+function add(g,mesh,y){mesh.position.y=y;g.add(mesh);return mesh;}
+const towers=[];
+function fin(g,a,b,c){const d=b.clone().sub(a);const m=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,d.length(),5),neon(c));m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(V(0,1,0),d.normalize());g.add(m);}
+// #5 Ping An Finance Center, 599 m
+{const g=new THREE.Group();const body=new THREE.CylinderGeometry(24,44,530,4,8).rotateY(Math.PI/4);add(g,new THREE.Mesh(body,glass(1,false,2,5,'#1c2a44',0.9)),265);
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(12,24,36,4).rotateY(Math.PI/4),solid('#9fb3c8')),548);
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(1.5,5,33,6),solid('#dfe8f2')),582.5);
+ for(const s of[-1,1])for(const s2 of[-1,1])fin(g,V(s*31.5,0,s2*31.5),V(s*17,530,s2*17),'#3ff0ff');
+ towers.push({g,h:599,name:'PING AN FINANCE CENTER',city:'SHENZHEN, CHINA',col:'#3ff0ff'});}
+// #4 Makkah Royal Clock Tower, 601 m
+{const g=new THREE.Group();add(g,new THREE.Mesh(new THREE.BoxGeometry(230,90,170),glass(2,true,3,1,'#3a3226',0.7)),45);
+ for(const[x,z,h]of[[-80,-50,250],[80,-50,230],[-80,50,210],[80,50,240]])add(g,new THREE.Mesh(new THREE.BoxGeometry(50,h,50),glass(3,true,1,2,'#3a3226',0.7)),h/2).position.set(x,h/2,z);
+ add(g,new THREE.Mesh(new THREE.BoxGeometry(80,360,80),glass(4,true,1,3,'#3a3226',0.7)),270);
+ add(g,new THREE.Mesh(new THREE.BoxGeometry(92,70,92),solid('#d9cfb8')),485);
+ for(let k=0;k<4;k++){const f=new THREE.Mesh(new THREE.CircleGeometry(30,24),new THREE.MeshBasicMaterial({color:'#f6fff6'}));const a=k*Math.PI/2;f.position.set(Math.sin(a)*46.5,485,Math.cos(a)*46.5);f.rotation.y=a;g.add(f);
+  const r=new THREE.Mesh(new THREE.RingGeometry(30,34,24),neon('#3dff8a'));r.position.copy(f.position).multiplyScalar(1.002);r.position.y=485;r.rotation.y=a;g.add(r);}
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(16,36,45,8),solid('#cfc4a8')),542);
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(2,8,40,8),neon('#3dff8a')),584);
+ add(g,new THREE.Mesh(new THREE.SphereGeometry(6,10,8),neon('#ffe680')),598);
+ towers.push({g,h:601,name:'MAKKAH ROYAL CLOCK TOWER',city:'MECCA, SAUDI ARABIA',col:'#3dff8a'});}
+// #3 Shanghai Tower, 632 m (twisting)
+{const g=new THREE.Group();const geo=twist(new THREE.CylinderGeometry(30,52,600,3,30),2.1,600);
+ add(g,new THREE.Mesh(geo,glass(5,false,3,5,'#173a3a',0.9)),300);
+ const geo2=twist(new THREE.CylinderGeometry(33,57,600,3,30,true),2.1,600);add(g,new THREE.Mesh(geo2,new THREE.MeshStandardMaterial({color:'#7ff7e0',transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false})),300);
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(14,30,32,3).rotateY(2.1),solid('#a8d8d0')),616);
+ towers.push({g,h:632,name:'SHANGHAI TOWER',city:'SHANGHAI, CHINA',col:'#7ff7e0'});}
+// #2 Merdeka 118, 679 m
+{const g=new THREE.Group();add(g,new THREE.Mesh(new THREE.CylinderGeometry(20,52,520,8,20),glass(6,false,3,5,'#1a2440',0.9)),260);
+ for(let k=0;k<8;k++){const a=k*Math.PI/4;fin(g,V(Math.cos(a)*52.5,0,Math.sin(a)*52.5),V(Math.cos(a)*20.5,520,Math.sin(a)*20.5),'#ffd84a');}
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(9,20,40,8),solid('#cbd5e6')),540);
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(1.2,6,119,8),solid('#eef3fb')),619.5);
+ towers.push({g,h:679,name:'MERDEKA 118',city:'KUALA LUMPUR, MALAYSIA',col:'#ffd84a'});}
+// #1 Burj Khalifa, 828 m
+{const g=new THREE.Group();const m=glass(7,false,1,1,'#22304a',0.9);
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(16,24,600,10),m),300);
+ for(let a=0;a<3;a++)for(let k=0;k<11;k++){const L=95*(1-(k+a/3)/11.5);if(L<6)continue;const h=600*(k+1+a/3)/11.8-600*(k+a/3)/11.8+1;const y0=600*(k+a/3)/11.8;
+  const ang=a*2*Math.PI/3;const b=new THREE.Mesh(new THREE.BoxGeometry(L,600/11.8+0.5,30),m);b.position.set(Math.cos(ang)*L/2,y0+300/11.8,Math.sin(ang)*L/2);b.rotation.y=-ang;g.add(b);}
+ add(g,new THREE.Mesh(new THREE.CylinderGeometry(2,12,228,8),solid('#dfe6f0',{metalness:.8,roughness:.25})),714);
+ add(g,new THREE.Mesh(new THREE.SphereGeometry(4,8,6),neon('#ff3fa4')),828);
+ towers.push({g,h:828,name:'BURJ KHALIFA',city:'DUBAI, UAE',col:'#ff3fa4'});}
+towers.forEach((tw,k)=>{tw.g.position.set(XS[k],0,0);tw.g.scale.y=0.001;scene.add(tw.g);
+ const pad=new THREE.Mesh(new THREE.CylinderGeometry(120,120,2,32),new THREE.MeshBasicMaterial({color:tw.col,transparent:true,opacity:.25}));pad.position.set(XS[k],1,0);scene.add(pad);tw.pad=pad;});
+// Jeddah Tower: built part + ghost of the plan
+const jG=new THREE.Group();jG.position.set(JX,0,0);scene.add(jG);
+const jSolid=new THREE.Group();jG.add(jSolid);
+{const m=solid('#6d7486',{roughness:.8});for(let a=0;a<3;a++){const ang=a*2*Math.PI/3;const b=new THREE.Mesh(new THREE.CylinderGeometry(18,40,430,6),m);b.position.set(Math.cos(ang)*28,215,Math.sin(ang)*28);jSolid.add(b);}
+ add(jSolid,new THREE.Mesh(new THREE.CylinderGeometry(30,50,430,6),glass(9,true,2,4,'#2a2a2a',0.5)),215);
+ // crane
+ const cm=neon('#ffb000');add(jSolid,new THREE.Mesh(new THREE.BoxGeometry(5,90,5),cm),475);const jib=new THREE.Mesh(new THREE.BoxGeometry(150,4,4),cm);jib.position.set(40,518,0);jSolid.add(jib);
+ const lt=new THREE.Mesh(new THREE.SphereGeometry(5,8,6),neon('#ff2020'));lt.position.set(0,524,0);jSolid.add(lt);}
+const ghostMat=new THREE.LineBasicMaterial({color:'#7df9ff',transparent:true,opacity:.85});
+const jGhost=new THREE.Group();jG.add(jGhost);
+{for(let a=0;a<3;a++){const ang=a*2*Math.PI/3;const len=[1,0.8,0.65][a];const geo=new THREE.CylinderGeometry(4,40,1000*len,6,Math.round(16*len));const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),ghostMat);e.position.set(Math.cos(ang)*28,500*len,Math.sin(ang)*28);jGhost.add(e);}
+ {const gm=new THREE.MeshBasicMaterial({color:'#5ff4ff',transparent:true,opacity:.22,depthWrite:false});for(let a=0;a<3;a++){const ang=a*2*Math.PI/3;const len=[1,0.8,0.65][a];const m=new THREE.Mesh(new THREE.CylinderGeometry(4,40,1000*len,6),gm);m.position.set(Math.cos(ang)*28,500*len,Math.sin(ang)*28);jGhost.add(m);}}
+ const sp=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(1,6,120,6)),ghostMat);sp.position.set(Math.cos(0)*28,1000,0);jGhost.add(sp);}
+jGhost.scale.y=0.001;
+// 1 km line
+const kmLine=new THREE.Mesh(new THREE.BoxGeometry(2600,3,3),neon('#ff3fa4'));kmLine.position.set(900,1000,0);scene.add(kmLine);
+
+// ---------- timeline ----------
+function segIndex(t){let k=0;for(const s of SEG)if(t>=s.start-0.3)k=s.i;return k;}
+const GROW=k=>S[k+1].start+0.15;                 // tower k grows in segment k+1
+const growK=(k,t)=>{const x=(t-GROW(k))/2.0;if(x<=0)return 0.001;if(x>=1)return 1;return eout(x);};
+const jGrow=t=>eout((t-S[6].start-1.4)/2.4);
+function camPose(i,t){const lt=t-(S[i].start-0.3);
+ if(i===0){const e=ease(lt/5);return [V(lerp(-900,-420,e),lerp(900,240,e),lerp(2400,1100,e)),V(lerp(300,150,e),lerp(0,120,e),0)];}
+ if(i>=1&&i<=5){const k=i-1;const x=XS[k],h=towers[k].h;const g=growK(k,t);const top=Math.max(60,h*g);const e=ease(lt/5);
+  if(i===5&&t>S[5].start+2.6){const e2=ease((t-S[5].start-2.6)/2.2);return [V(lerp(x+260,610,e2),lerp(top*0.75,520,e2),lerp(820,3350,e2)),V(lerp(x,610,e2),lerp(top*0.62,440,e2),0)];}
+  return [V(x+lerp(320,250,e),lerp(40,top*0.75,ease((t-GROW(k))/2.2)),lerp(560,820,e)),V(x,lerp(80,top*0.62,ease((t-GROW(k))/2.2)),0)];}
+ if(i===6){const e=ease(lt/3);return [V(lerp(640,1350,e),lerp(520,560,e),lerp(3350,2700,e)),V(lerp(640,1450,e),lerp(440,640,e),0)];}
+ const e=ease((t-S[7].start)/3);return [V(lerp(1350,1000,e),lerp(560,700,e),lerp(2700,3500,e)),V(lerp(1450,950,e),lerp(640,560,e),0)];}
+
+// ---------- overlay ----------
+const out=document.getElementById('out');const ctx=out.getContext('2d');
+const CY='#3ff0ff',PK='#ff3fa4',NV='#0b0820';
+function txt(s,x,y,size,fill='#fff',align='center',w=1000,stroke=0,sc=NV,weight=700){ctx.font=`${weight} ${size}px G`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.lineJoin='round';
+ if(stroke){ctx.lineWidth=stroke;ctx.strokeStyle=sc;ctx.strokeText(s,x,y,w);}ctx.fillStyle=fill;ctx.fillText(s,x,y,w);}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+function pop(x){if(x<=0)return 0;if(x>=1)return 1;return 1+2.2*Math.pow(x-1,3)+1.2*Math.pow(x-1,2);}
+function project(v){const p=v.clone().project(camera);return {x:(p.x+1)/2*W,y:(1-p.y)/2*H,z:p.z};}
+function glowText(s,x,y,size,col,align='center',w=1000){ctx.save();ctx.shadowColor=col;ctx.shadowBlur=30;txt(s,x,y,size,col,align,w);ctx.shadowBlur=0;txt(s,x,y,size,'#ffffff','center',w);ctx.restore();}
+function card(rank,tw,k,t){if(k<=0)return;ctx.save();ctx.translate(W/2,300);ctx.scale(k,k);
+ ctx.fillStyle='rgba(11,8,32,.82)';rr(-470,-120,940,240,30);ctx.fill();ctx.strokeStyle=tw.col;ctx.lineWidth=5;ctx.shadowColor=tw.col;ctx.shadowBlur=25;ctx.stroke();ctx.shadowBlur=0;
+ ctx.fillStyle=tw.col;ctx.beginPath();ctx.arc(-355,0,88,0,7);ctx.fill();txt('#'+rank,-355,6,96,NV,'center',160);
+ txt(tw.name,60,-38,58,'#fff','center',560);txt(tw.city,60,44,40,tw.col,'center',560,0,NV,500);ctx.restore();}
+function meter(val,col,k){if(k<=0)return;ctx.save();ctx.globalAlpha=Math.min(1,k);
+ const x=90,y0=1300,y1=560;ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();
+ for(let m=0;m<=1000;m+=100){const y=lerp(y0,y1,m/1000);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(m%500?16:30),y);ctx.stroke();if(m%500===0)txt(m+'',x+40,y,30,'rgba(255,255,255,.7)','left',100,0,NV,500);}
+ const y=lerp(y0,y1,val/1000);ctx.strokeStyle=col;ctx.lineWidth=12;ctx.shadowColor=col;ctx.shadowBlur=20;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y);ctx.stroke();ctx.shadowBlur=0;
+ ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x+14,y);ctx.lineTo(x+40,y-16);ctx.lineTo(x+40,y+16);ctx.fill();ctx.restore();}
+function bigNum(v,col,k){if(k<=0)return;ctx.save();ctx.translate(W/2+40,560);ctx.scale(k,k);glowText(Math.round(v)+' m',0,0,170,col,'center',800);ctx.restore();}
+function topTag(k,label,col,a){const tw=towers[k];const p=project(V(XS[k],tw.h+18,0));if(p.z>1||a<=0)return;ctx.save();ctx.globalAlpha=Math.min(1,a);ctx.translate(p.x,p.y-40);
+ ctx.font='700 42px G';const w=ctx.measureText(label).width+36;ctx.fillStyle='rgba(11,8,32,.85)';rr(-w/2,-30,w,60,30);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=4;ctx.stroke();txt(label,0,3,42,col,'center',400);ctx.restore();}
+
+const CAP=[];SCRIPT.lines.forEach((l,i)=>{const s=SEG[i];const words=(l.cap||l.say).split(/\s+/);const wt=w=>/\d/.test(w)?w.length*3.0:w.length+1;
+ const total=words.reduce((a,w)=>a+wt(w),0);let acc=0;const ws=words.map(w=>{const st=s.start+(s.end-s.start)*acc/total;acc+=wt(w);return {w,st,en:s.start+(s.end-s.start)*acc/total};});
+ for(let k=0;k<ws.length;k+=3)CAP.push(ws.slice(k,k+3));});
+function drawCaption(t){const c=CAP.find(c=>t>=c[0].st&&t<c[c.length-1].en+0.15);if(!c)return;
+ const y=1560,size=74;ctx.font=`700 ${size}px G`;const sp=22;const parts=c.map(o=>o.w);const widths=parts.map(p=>ctx.measureText(p).width);
+ const tot=widths.reduce((a,b)=>a+b,0)+sp*(parts.length-1);const sc=Math.min(1,900/tot);
+ ctx.save();ctx.translate(W/2,y);ctx.scale(sc,sc);ctx.fillStyle='rgba(11,8,32,.75)';rr(-tot/2-40,-62,tot+80,124,62);ctx.fill();let x=-tot/2;
+ parts.forEach((p,j)=>{const on=t>=c[j].st&&(t<c[j].en||j===c.length-1);const b=on?pop((t-c[j].st)/0.14):1;
+  ctx.save();ctx.translate(x+widths[j]/2,0);const s=on?1.06*b+(1-b)*.9:1;ctx.scale(s,s);
+  if(on){ctx.shadowColor=CY;ctx.shadowBlur=24;txt(p,0,4,size,CY,'center',2000);}else txt(p,0,4,size,'#ffffff','center',2000);ctx.restore();x+=widths[j]+sp;});
+ ctx.restore();}
+
+window.renderAt=function(t){
+ const i=segIndex(t);
+ towers.forEach((tw,k)=>{tw.g.scale.y=growK(k,t);tw.pad.material.opacity=t>GROW(k)?0.25:0.08;});
+ jGhost.scale.y=Math.max(0.001,jGrow(t));jSolid.visible=t>S[6].start-0.4;jGhost.visible=t>S[6].start;
+ kmLine.visible=t>S[6].start+3.4;kmLine.scale.x=eout((t-S[6].start-3.4)/0.8)+0.001;
+ const s=S[i];const lt=t-(s.start-0.3);let [p,g]=camPose(i,t);
+ if(i>0&&lt<1.0){const [pp,pg]=camPose(i-1,t);const e=ease(lt/1.0);p=pp.lerp(p,e);g=pg.lerp(g,e);}
+ camera.position.copy(p);camera.lookAt(g);camera.updateMatrixWorld();
+ renderer.render(scene,camera);ctx.drawImage(glc,0,0);
+ const gr=ctx.createLinearGradient(0,1300,0,H);gr.addColorStop(0,'rgba(11,8,32,0)');gr.addColorStop(1,'rgba(11,8,32,.6)');ctx.fillStyle=gr;ctx.fillRect(0,1300,W,620);
+ if(i===0){const k=pop((t-0.2)/0.45);if(k>0){ctx.save();ctx.translate(W/2,330);ctx.scale(k,k);txt('THE 5 TALLEST',0,-70,104,'#fff','center',1000,14,NV);glowText('BUILDINGS',0,50,150,PK);ctx.restore();}
+  const k2=pop((t-2.2)/0.4);if(k2>0){ctx.save();ctx.translate(W/2,560);ctx.scale(k2,k2);ctx.fillStyle='rgba(11,8,32,.8)';rr(-250,-46,500,92,46);ctx.fill();ctx.strokeStyle=CY;ctx.lineWidth=4;ctx.stroke();txt('ON EARTH · 2026',0,3,46,CY,'center',480);ctx.restore();}}
+ if(i>=1&&i<=5){const k=i-1;const tw=towers[k];const g2=growK(k,t);
+  if(!(i===5&&t>S[5].start+2.8)){card(6-i,tw,pop((t-S[i].start+0.1)/0.4),t);meter(tw.h*g2,tw.col,pop((t-S[i].start)/0.3));bigNum(tw.h*g2,tw.col,pop((t-GROW(k)-0.1)/0.3));}}
+ if(i===5&&t>S[5].start+2.8){const a=(t-S[5].start-3.0)/0.4;towers.forEach((tw,k)=>topTag(k,tw.h+' m',tw.col,pop(a-k*0.3)));}
+ if(i>=6){towers.forEach((tw,k)=>topTag(k,tw.h+' m',tw.col,i===6?1-clamp((t-S[6].start)/0.6):0));
+  if(i===6){const lt=t-S[6].start;const k=pop((lt-0.1)/0.4);if(k>0){ctx.save();ctx.translate(W/2,280);ctx.scale(k,k);ctx.fillStyle='rgba(11,8,32,.82)';rr(-450,-110,900,220,30);ctx.fill();ctx.strokeStyle='#ffb000';ctx.lineWidth=5;ctx.stroke();
+    txt('JEDDAH TOWER',0,-34,78,'#fff','center',840);txt('UNDER CONSTRUCTION',0,48,46,'#ffb000','center',840,0,NV,500);ctx.restore();}
+   const jv=1000*jGrow(t);if(lt>1.3){ctx.save();ctx.translate(W/2,1270);glowText((lt>3.8?'1,000+ m':Math.round(jv)+' m'),0,0,150,CY);txt('PLANNED HEIGHT',0,105,44,'#fff','center',800,8,NV,500);ctx.restore();}
+   if(lt>3.6){const p=project(V(JX+500,1000,0));const k3=pop((lt-3.6)/0.4);ctx.save();ctx.globalAlpha=Math.min(1,k3);ctx.translate(Math.min(W-150,p.x),p.y-44);ctx.fillStyle=PK;rr(-110,-32,220,64,32);ctx.fill();txt('1 KM',0,3,44,'#fff','center',200);ctx.restore();}}}
+ if(i>=7){const k=pop((t-S[7].start+0.2)/0.4);ctx.save();ctx.translate(W/2,1755);ctx.scale(k,k);ctx.shadowColor=PK;ctx.shadowBlur=30;ctx.fillStyle=PK;rr(-320,-68,640,136,68);ctx.fill();ctx.shadowBlur=0;txt('SUBSCRIBE',0,4,82,'#fff','center',600);ctx.restore();}
+ drawCaption(t);
+ return out.toDataURL('image/jpeg',0.9);
+};
+await document.fonts.load('700 40px G');await document.fonts.load('500 40px G');
+window.READY=true;
+</script></body></html>

@@ -25,6 +25,9 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 | examples/v01-tallest-mountains | Earth's 5 Tallest Mountains | Himalaya flyover, Montserrat yellow cards | af_heart |
 | videos/v02-ocean-depth | How Deep Is the Ocean? | probe dive + Everest cutaway, cyan sonar HUD, Bebas/Space Grotesk | am_michael |
 | videos/v03-canal-locks | How Do Canal Locks Work? | sunny diorama cutaway, orange stickers, Fredoka | bf_emma |
+| videos/v04-volcano-eruption | Why Do Volcanoes Explode? | dusk island, cutaway with glowing magma + eruption, hazard tags, Bebas | am_adam |
+| videos/v05-tallest-buildings | The World's 5 Tallest Buildings | neon night city, towers rise one by one, meter HUD, Space Grotesk | bm_george |
+| videos/v06-octopus-5-facts | 5 Facts About Octopuses | sunlit coral reef, see-through octopus, cream fact cards, Montserrat | af_bella |
 
 ## Channel rules (standing decisions)
 

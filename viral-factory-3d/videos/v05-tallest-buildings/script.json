@@ -1,0 +1,21 @@
+{
+ "voice": "bm_george",
+ "speed": 1.13,
+ "lines": [
+  {"say": "Which building is the tallest on Earth? Let's build the top five, one by one.", "caption": "Tallest buildings", "pause_before": 0.3,
+   "cap": "Which building is the tallest on Earth? Let's build the top five, one by one."},
+  {"say": "Number five. Ping An Finance Center, in Shenzhen. Five hundred ninety-nine meters.", "caption": "#5 Ping An",
+   "cap": "Number five. Ping An Finance Center, in Shenzhen. 599 meters."},
+  {"say": "Number four. The Makkah Royal Clock Tower. Six hundred and one meters.", "caption": "#4 Clock Tower",
+   "cap": "Number four. The Makkah Royal Clock Tower. 601 meters."},
+  {"say": "Number three. Shanghai Tower, with its famous twist. Six hundred thirty-two meters.", "caption": "#3 Shanghai Tower",
+   "cap": "Number three. Shanghai Tower, with its famous twist. 632 meters."},
+  {"say": "Number two. Merdeka one-eighteen, in Kuala Lumpur. Six hundred seventy-nine meters.", "caption": "#2 Merdeka 118",
+   "cap": "Number two. Merdeka 118, in Kuala Lumpur. 679 meters."},
+  {"say": "And number one. Burj Khalifa, in Dubai. Eight hundred twenty-eight meters.", "caption": "#1 Burj Khalifa",
+   "cap": "And number one. Burj Khalifa, in Dubai. 828 meters."},
+  {"say": "But in Saudi Arabia, Jeddah Tower is still rising. The plan? More than one kilometer tall.", "caption": "Jeddah Tower", "pause_before": 0.4,
+   "cap": "But in Saudi Arabia, Jeddah Tower is still rising. The plan? More than 1 kilometer tall."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}

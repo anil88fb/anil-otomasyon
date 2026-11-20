@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:B;src:url(/node_modules/@fontsource/bebas-neue/files/bebas-neue-latin-400-normal.woff2)}
+@font-face{font-family:M;src:url(/node_modules/@fontsource/montserrat/files/montserrat-latin-800-normal.woff2);font-weight:800}
+body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W=1080,H=1920;
+const TIMING=await (await fetch('timing.json')).json();
+const SCRIPT=await (await fetch('script.json')).json();
+const SEG=TIMING.segments,S=SEG;
+// v04 "Why Do Volcanoes Explode?" — dusk volcanic island, cutaway cross-section, glowing magma, eruption.
+
+function hash(x,y){let h=(x|0)*374761393+(y|0)*668265263;h=(h^(h>>>13))*1274126177;return ((h^(h>>>16))>>>0)/4294967295;}
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>x<=0?0:x>=1?1:x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const eout=x=>x<=0?0:x>=1?1:1-Math.pow(1-x,3);
+const lerp=(a,b,k)=>a+(b-a)*k;
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+
+const glc=document.createElement('canvas');glc.width=W;glc.height=H;
+const renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H,false);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,W/H,1,8000);
+const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,vertexShader:`varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+ fragmentShader:`varying vec3 p;void main(){float h=clamp(p.y*1.6+.08,0.,1.);vec3 lo=vec3(1.,.45,.25),mid=vec3(.55,.18,.42),hi=vec3(.07,.05,.2);
+ vec3 c=h<.35?mix(lo,mid,h/.35):mix(mid,hi,(h-.35)/.65);gl_FragColor=vec4(c,1.);}`});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(4000,32,16),skyMat));
+scene.fog=new THREE.Fog('#7a3050',1400,3600);
+const sun=new THREE.DirectionalLight('#ffb38a',2.2);sun.position.set(-700,500,600);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-900,right:900,top:700,bottom:-500,near:10,far:2500});sun.shadow.bias=-0.0008;
+scene.add(sun);scene.add(new THREE.HemisphereLight('#a26bd6','#3a1d1a',1.1));
+const front=new THREE.DirectionalLight('#ffe2cc',1.3);front.position.set(100,100,900);scene.add(front);
+const glow=new THREE.PointLight('#ff5a1a',0,1800,1.2);glow.position.set(0,330,0);scene.add(glow);
+const deepGlow=new THREE.PointLight('#ff6a20',2.5,900,1.4);deepGlow.position.set(0,-260,120);scene.add(deepGlow);
+
+const mat=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.95},o));
+// ---------- volcano profile ----------
+const HT=320,R0=560,RIM=62,CR=34;
+const rOf=y=>RIM+(R0-RIM)*Math.pow(1-y/HT,1.6);
+const prof=[];for(let k=0;k<=24;k++){const y=HT*k/24;prof.push(new THREE.Vector2(rOf(y)+ (k>0&&k<24?(hash(k,9)-.5)*14:0),y));}
+prof.push(new THREE.Vector2(CR,HT-28));prof.push(new THREE.Vector2(0.1,HT-30));
+const coneColor=(g)=>{g=g.toNonIndexed();const p=g.attributes.position,c=new THREE.Color(),col=[];
+ for(let i=0;i<p.count;i++){const y=p.getY(i);const n=hash(Math.floor(p.getX(i)/40),Math.floor(p.getZ(i)/40));
+  c.set(y>HT-40?'#3b2a2a':y>HT*0.55?(n>.5?'#5a4440':'#4d3a37'):y>40?(n>.5?'#6b4a3a':'#5e4234'):(n>.4?'#4f6b34':'#3f5a2c'));col.push(c.r,c.g,c.b);}
+ g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.computeVertexNormals();return g;};
+const coneMat=new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.95,side:THREE.DoubleSide});
+const backCone=new THREE.Mesh(coneColor(new THREE.LatheGeometry(prof,28,Math.PI/2,Math.PI)),coneMat);backCone.castShadow=true;backCone.receiveShadow=true;scene.add(backCone);
+const frontG=new THREE.Group();scene.add(frontG);
+const frontCone=new THREE.Mesh(coneColor(new THREE.LatheGeometry(prof,28,-Math.PI/2,Math.PI)),coneMat);frontCone.castShadow=true;frontG.add(frontCone);
+
+// ---------- ground slab (cut at z=0) ----------
+const BOT=-950,GX=1100;
+const strataTex=(()=>{const c=document.createElement('canvas');c.width=1024;c.height=1024;const g=c.getContext('2d');
+ const cols=['#7d5a3f','#6b4a35','#8a6446','#5c3f2e','#73503a','#4e3527','#5a3d2c','#3f2a20'];
+ for(let b=0;b<cols.length;b++){g.fillStyle=cols[b];g.beginPath();const y0=b*128-10;g.moveTo(0,y0);
+  for(let x=0;x<=1024;x+=32)g.lineTo(x,y0+Math.sin(x*0.012+b*1.7)*14+hash(x,b)*10);g.lineTo(1024,1024);g.lineTo(0,1024);g.fill();}
+ for(let i=0;i<500;i++){g.fillStyle=`rgba(0,0,0,${.08+hash(i,2)*.12})`;g.beginPath();g.arc(hash(i,3)*1024,hash(i,4)*1024,2+hash(i,5)*7,0,7);g.fill();}
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;})();
+// cut face of the cone + ground as one shape
+function faceShape(){const s=new THREE.Shape();s.moveTo(-GX,BOT);s.lineTo(GX,BOT);s.lineTo(GX,0);
+ for(let k=0;k<prof.length-2;k++)s.lineTo(prof[k].x,prof[k].y);s.lineTo(CR,HT-28);s.lineTo(-CR,HT-28);
+ for(let k=prof.length-3;k>=0;k--)s.lineTo(-prof[k].x,prof[k].y);s.lineTo(-GX,0);s.lineTo(-GX,BOT);return s;}
+const faceGeo=new THREE.ShapeGeometry(faceShape());
+{const p=faceGeo.attributes.position,uv=faceGeo.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,(p.getX(i)+GX)/(2*GX),(p.getY(i)-BOT)/(HT-BOT));}
+const face=new THREE.Mesh(faceGeo,new THREE.MeshStandardMaterial({map:strataTex,roughness:1,side:THREE.DoubleSide}));face.position.z=0;scene.add(face);
+// slab body behind the face
+const slab=new THREE.Mesh(new THREE.BoxGeometry(2*GX,-BOT,1400),mat('#4a3326'));slab.position.set(0,BOT/2-.5,-700.5);slab.receiveShadow=true;scene.add(slab);
+const grassTop=new THREE.Mesh(new THREE.PlaneGeometry(2*GX,1400,30,20).rotateX(-Math.PI/2),mat('#3e5a2a'));grassTop.position.set(0,0.2,-700);grassTop.receiveShadow=true;scene.add(grassTop);
+// front piece of ground that slides away with the front cone
+const fSlab=new THREE.Mesh(new THREE.BoxGeometry(2*GX,-BOT,700),mat('#4a3326'));fSlab.position.set(0,BOT/2-.5,350);frontG.add(fSlab);
+const fTop=new THREE.Mesh(new THREE.PlaneGeometry(2*GX,700).rotateX(-Math.PI/2),mat('#3e5a2a'));fTop.position.set(0,0.2,350);fTop.receiveShadow=true;frontG.add(fTop);
+// sea around the island
+const sea=new THREE.Mesh(new THREE.PlaneGeometry(12000,12000).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:'#2a1f4a',roughness:.25,metalness:.2}));sea.position.set(0,-30,-6000);scene.add(sea);
+const fsea=new THREE.Mesh(new THREE.PlaneGeometry(12000,6000).rotateX(-Math.PI/2),sea.material);fsea.position.set(0,-30,3000);frontG.add(fsea);
+// trees and rocks (back ground + front ground)
+{const tm=[mat('#2f4a24'),mat('#3a5a2a'),mat('#28401f')],trunk=mat('#4a2e1e'),rock=mat('#3a302e');
+ for(let i=0;i<340;i++){const x=(hash(i,1)-.5)*2*GX*0.95,z=(hash(i,2)-.5)*2*1300;const r=Math.hypot(x,z);if(r<R0+30)continue;if(Math.abs(z)<15)continue;
+  const par=z>0?frontG:scene;const t=new THREE.Group();const s=10+hash(i,4)*14;
+  if(hash(i,7)<.2){const rk=new THREE.Mesh(new THREE.DodecahedronGeometry(s*.8,0),rock);rk.position.y=s*.3;rk.castShadow=true;t.add(rk);}
+  else{const tr=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.6,s*.8,5),trunk);tr.position.y=s*.4;t.add(tr);
+   const cr=new THREE.Mesh(new THREE.ConeGeometry(s*.55,s*1.9,6),tm[i%3]);cr.position.y=s*1.4;cr.castShadow=true;t.add(cr);}
+  t.position.set(x,0,z);par.add(t);}}
+
+// ---------- magma (on the cut face) ----------
+const CH_Y=-300,CH_RX=230,CH_RY=95;  // chamber
+const CW=24;                         // half width of the conduit
+function magmaShape(){const s=new THREE.Shape();const n=40;
+ const a0=Math.asin(CW/CH_RX);// start angle at conduit
+ s.moveTo(-CW,HT-28);s.lineTo(-CW,CH_Y+CH_RY*0.9);
+ for(let k=0;k<=n;k++){const a=Math.PI/2+a0+(2*Math.PI-2*a0)*k/n;s.lineTo(Math.cos(a)*CH_RX+Math.sin(a*3)*8,CH_Y+Math.sin(a)*CH_RY);}
+ s.lineTo(CW,CH_Y+CH_RY*0.9);s.lineTo(CW,HT-28);s.lineTo(-CW,HT-28);return s;}
+const magmaMat=new THREE.ShaderMaterial({transparent:true,uniforms:{uT:{value:0},uLevel:{value:-200},uHeat:{value:1}},
+ vertexShader:`varying vec2 vp;void main(){vp=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+ fragmentShader:`varying vec2 vp;uniform float uT,uLevel,uHeat;
+ float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+ float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+ void main(){if(vp.y>uLevel&&vp.y>-210.)discard;
+  vec2 q=vp*.02+vec2(0.,-uT*.35);float v=n(q)*.6+n(q*2.3+3.)*.3+n(q*5.)*.1;
+  vec3 c=mix(vec3(.75,.08,.02),vec3(1.,.55,.08),smoothstep(.3,.75,v));c=mix(c,vec3(1.,.9,.45),smoothstep(.72,.95,v));
+  gl_FragColor=vec4(c*uHeat*1.25,1.);}`});
+const magma=new THREE.Mesh(new THREE.ShapeGeometry(magmaShape(),2),magmaMat);magma.position.z=0.8;scene.add(magma);
+// dark rim around the chamber / conduit
+const rimM=new THREE.Mesh(new THREE.ShapeGeometry(magmaShape()),new THREE.MeshBasicMaterial({color:'#2b1510'}));rimM.scale.set(1.06,1.0,1);rimM.position.set(0,0,0.4);scene.add(rimM);
+// gas bubbles on the face
+const bubM=new THREE.MeshBasicMaterial({color:'#fff3c8',transparent:true,opacity:.9});
+const ringM=new THREE.MeshBasicMaterial({color:'#ffe08a'});
+const bubbles=[];for(let i=0;i<90;i++){const g=new THREE.Group();const d=new THREE.Mesh(new THREE.CircleGeometry(1,16),bubM);const r=new THREE.Mesh(new THREE.RingGeometry(1,1.25,16),ringM);g.add(d);g.add(r);
+ g.position.z=1.6;g.userData={o:hash(i,11),x:(hash(i,12)-.5)*2,cx:(hash(i,13)-.5)*2*CH_RX*.8,cy:CH_Y+(hash(i,14)-.5)*CH_RY*1.3};scene.add(g);bubbles.push(g);}
+// lava tubes on the back slope
+const lavaMat=new THREE.MeshStandardMaterial({color:'#ff3a00',emissive:'#ff2a00',emissiveIntensity:1.2,flatShading:true,roughness:.6});
+const flows=[];[[Math.PI*0.80,0],[Math.PI*1.05,1],[Math.PI*1.3,2],[Math.PI*0.62,3]].forEach(([ph,j])=>{
+ const pts=[];for(let k=0;k<=30;k++){const y=HT-30-k*(HT-34)/30;const r=rOf(y)+3;const a=ph+Math.sin(k*.5+j)*0.06;pts.push(V(r*Math.sin(a),y+4,r*Math.cos(a)));}
+ const cur=new THREE.CatmullRomCurve3(pts);const geo=new THREE.TubeGeometry(cur,120,15-j*2,8,false);const m=new THREE.Mesh(geo,lavaMat);m.geometry.setDrawRange(0,0);scene.add(m);flows.push({m,n:geo.index.count,d:j*0.5});});
+// eruption particles
+const rockM=new THREE.MeshStandardMaterial({color:'#2a1a14',emissive:'#ff3a0a',emissiveIntensity:.9,flatShading:true});
+const fireM=new THREE.MeshBasicMaterial({color:'#ffb030'});
+const ashMs=[0,1,2].map(i=>new THREE.MeshStandardMaterial({color:['#5a5058','#6e6670','#47404a'][i],flatShading:true,roughness:1,transparent:true,opacity:.96}));
+const rocks=[],ash=[],fire=[];
+for(let i=0;i<120;i++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(4+hash(i,21)*8,0),rockM);m.castShadow=true;
+ const a=hash(i,22)*Math.PI*2,sp=60+hash(i,23)*260;m.userData={vx:Math.cos(a)*sp*.55,vz:Math.sin(a)*sp*.55,vy:260+hash(i,24)*380,d:hash(i,25)*1.8};scene.add(m);rocks.push(m);}
+for(let i=0;i<160;i++){const m=new THREE.Mesh(new THREE.TetrahedronGeometry(3+hash(i,31)*4,0),fireM);const a=hash(i,32)*Math.PI*2,sp=20+hash(i,33)*120;
+ m.userData={vx:Math.cos(a)*sp,vz:Math.sin(a)*sp,vy:200+hash(i,34)*300,d:hash(i,35)*3.5};scene.add(m);fire.push(m);}
+for(let i=0;i<130;i++){const m=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),ashMs[i%3]);m.userData={h:hash(i,41),a:hash(i,42)*Math.PI*2,r:hash(i,43),d:hash(i,44)*1.2,s:22+hash(i,45)*40};scene.add(m);ash.push(m);}
+
+// ---------- timeline ----------
+const CUT=S[0].end-0.6;                        // front half slides away
+const TB=S[4].start+2.2;                       // the blast
+function segIndex(t){let k=0;for(const s of SEG)if(t>=s.start-0.3)k=s.i;return k;}
+function magmaLevel(t){ // top of magma in the conduit
+ if(t<S[1].start)return -215;
+ if(t<S[3].start)return lerp(-215,-40,ease((t-S[1].start)/(S[3].start-S[1].start)));
+ return lerp(-40,HT-40,ease((t-S[3].start)/(TB-S[3].start)));}
+function shakeAt(t){const k=t>TB?Math.exp(-(t-TB)*1.6):0;return k;}
+function camPose(i,t){const lt=t-(S[i].start-0.3);
+ switch(i){
+  case 0:{const e=ease(lt/5.2);const a=lerp(0.9,0.08,e);const r=lerp(1700,1450,e);return [V(Math.sin(a)*r,lerp(700,380,e),Math.cos(a)*r),V(0,lerp(150,40,e),0)];}
+  case 1:{const e=ease(lt/6);return [V(lerp(60,-40,e),lerp(-150,-190,e),lerp(820,700,e)),V(0,lerp(-250,-230,e),0)];}
+  case 2:{const e=ease(lt/7);return [V(lerp(-40,90,e),lerp(-210,-240,e),lerp(640,520,e)),V(lerp(0,20,e),-275,0)];}
+  case 3:{const e=ease(lt/5.8);const y=magmaLevel(t);return [V(lerp(120,160,e),y+60,lerp(520,620,e)),V(0,y-10,0)];}
+  case 4:{const e=eout(lt/2.0);return [V(lerp(220,520,e),lerp(300,520,e),lerp(900,1700,e)),V(0,lerp(200,420,e),0)];}
+  case 5:{const e=ease(lt/7);const a=lerp(0.35,-0.25,e);return [V(Math.sin(a)*1050,lerp(1150,980,e),Math.cos(a)*1050),V(0,lerp(80,60,e),-160)];}
+  default:{const e=ease((t-S[6].start)/2.5);return [V(lerp(-330,-420,e),lerp(1000,1100,e),lerp1(1000,1250,e)),V(0,80,-120)];}
+ }}
+function lerp1(a,b,k){return a+(b-a)*k;}
+
+// ---------- overlay ----------
+const out=document.getElementById('out');const ctx=out.getContext('2d');
+const HOT='#ff6a1a',YEL='#ffd23f',INK='#140a12';
+function txt(s,x,y,size,fill='#fff',align='center',w=1000,stroke=0,sc=INK,font='B',weight=400){ctx.font=`${weight} ${size}px ${font}`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.lineJoin='round';
+ if(stroke){ctx.lineWidth=stroke;ctx.strokeStyle=sc;ctx.strokeText(s,x,y,w);}ctx.fillStyle=fill;ctx.fillText(s,x,y,w);}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+function pop(x){if(x<=0)return 0;if(x>=1)return 1;return 1+2.2*Math.pow(x-1,3)+1.2*Math.pow(x-1,2);}
+function project(v){const p=v.clone().project(camera);return {x:(p.x+1)/2*W,y:(1-p.y)/2*H,z:p.z};}
+// hazard tag: dark card with striped left bar
+function tag(lines,x,y,k,size=78,accent=HOT){if(k<=0)return;ctx.save();ctx.translate(x,y);ctx.scale(k,k);ctx.font=`400 ${size}px B`;
+ const w=Math.max(...lines.map(l=>ctx.measureText(l).width))+110,h=lines.length*size*0.95+44;
+ ctx.fillStyle='rgba(20,10,18,.88)';rr(-w/2,-h/2,w,h,14);ctx.fill();
+ ctx.save();rr(-w/2,-h/2,40,h,14);ctx.clip();for(let s=-4;s<12;s++){ctx.fillStyle=s%2?YEL:INK;ctx.beginPath();ctx.moveTo(-w/2,-h/2+s*24);ctx.lineTo(-w/2+40,-h/2+s*24-24);ctx.lineTo(-w/2+40,-h/2+s*24);ctx.lineTo(-w/2,-h/2+s*24+24);ctx.fill();}ctx.restore();
+ ctx.strokeStyle=accent;ctx.lineWidth=5;rr(-w/2,-h/2,w,h,14);ctx.stroke();
+ lines.forEach((l,j)=>txt(l,20,-h/2+22+size*0.5+j*size*0.95,size,j===0?'#fff':accent,'center',1000));ctx.restore();}
+function pin(v,lines,k,lx,ly){if(k<=0)return;const p=project(v);if(p.z>1)return;ctx.save();ctx.globalAlpha=Math.min(1,k);
+ ctx.strokeStyle=YEL;ctx.lineWidth=5;ctx.setLineDash([14,10]);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(lx,ly);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle=YEL;ctx.beginPath();ctx.arc(p.x,p.y,12,0,7);ctx.fill();ctx.restore();tag(lines,lx,ly,k,70);}
+function gauge(x,y,val,label,k){if(k<=0)return;ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+ ctx.fillStyle='rgba(20,10,18,.88)';ctx.beginPath();ctx.arc(0,0,150,0,7);ctx.fill();ctx.strokeStyle=YEL;ctx.lineWidth=6;ctx.stroke();
+ const a0=Math.PI*0.75,a1=Math.PI*2.25;
+ for(let i=0;i<=10;i++){const a=lerp(a0,a1,i/10);ctx.strokeStyle=i>7?HOT:'#fff';ctx.lineWidth=i%5?3:6;ctx.beginPath();ctx.moveTo(Math.cos(a)*112,Math.sin(a)*112);ctx.lineTo(Math.cos(a)*(i%5?126:134),Math.sin(a)*(i%5?126:134));ctx.stroke();}
+ const a=lerp(a0,a1,clamp(val));ctx.strokeStyle=HOT;ctx.lineWidth=9;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*100,Math.sin(a)*100);ctx.stroke();
+ ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,12,0,7);ctx.fill();
+ txt(label,0,72,44,YEL,'center',240);ctx.restore();}
+function bottle(x,y,k,t,open){if(k<=0)return;ctx.save();ctx.translate(x,y);ctx.scale(k,k);
+ ctx.fillStyle='rgba(20,10,18,.85)';rr(-150,-230,300,460,30);ctx.fill();ctx.strokeStyle=YEL;ctx.lineWidth=5;ctx.stroke();
+ ctx.fillStyle='rgba(120,220,140,.55)';ctx.beginPath();ctx.moveTo(-60,190);ctx.lineTo(60,190);ctx.lineTo(60,-40);ctx.quadraticCurveTo(60,-90,28,-110);ctx.lineTo(28,-160);ctx.lineTo(-28,-160);ctx.lineTo(-28,-110);ctx.quadraticCurveTo(-60,-90,-60,-40);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#d8ffe0';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle=HOT;rr(-34,-185,68,30,6);ctx.fill();
+ for(let i=0;i<14;i++){const ph=(t*0.5+hash(i,77))%1;const r=open?2+ph*9:2;ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.arc((hash(i,78)-.5)*90,170-ph*(open?300:30)-hash(i,79)*(open?0:180),r,0,7);ctx.fill();}
+ txt('SEALED = GAS STAYS IN',0,212,40,'#fff','center',280);ctx.restore();}
+
+const CAP=[];SCRIPT.lines.forEach((l,i)=>{const s=SEG[i];const words=(l.cap||l.say).split(/\s+/);const wt=w=>/\d/.test(w)?w.length*3.0:w.length+1;
+ const total=words.reduce((a,w)=>a+wt(w),0);let acc=0;const ws=words.map(w=>{const st=s.start+(s.end-s.start)*acc/total;acc+=wt(w);return {w,st,en:s.start+(s.end-s.start)*acc/total};});
+ for(let k=0;k<ws.length;k+=3)CAP.push(ws.slice(k,k+3));});
+function drawCaption(t){const c=CAP.find(c=>t>=c[0].st&&t<c[c.length-1].en+0.15);if(!c)return;
+ const y=1540,size=118;ctx.font=`400 ${size}px B`;const sp=26;const parts=c.map(o=>o.w.toUpperCase());const widths=parts.map(p=>ctx.measureText(p).width);
+ const tot=widths.reduce((a,b)=>a+b,0)+sp*(parts.length-1);const sc=Math.min(1,960/tot);
+ ctx.save();ctx.translate(W/2,y);ctx.scale(sc,sc);let x=-tot/2;
+ parts.forEach((p,j)=>{const on=t>=c[j].st&&(t<c[j].en||j===c.length-1);const b=on?pop((t-c[j].st)/0.14):1;
+  ctx.save();ctx.translate(x+widths[j]/2,0);const s=on?1.08*b+(1-b)*.9:1;ctx.scale(s,s);
+  if(on){const g=ctx.createLinearGradient(0,-55,0,55);g.addColorStop(0,YEL);g.addColorStop(1,HOT);txt(p,0,8,size,g,'center',2000,16,INK);}
+  else txt(p,0,8,size,'#ffffff','center',2000,16,INK);ctx.restore();x+=widths[j]+sp;});
+ ctx.restore();}
+
+window.renderAt=function(t){
+ const i=segIndex(t);
+ // front half slides away
+ const c=ease((t-CUT)/1.3);frontG.position.set(0,-c*900,c*1300);frontG.visible=c<.999;
+ const lv=magmaLevel(t);magmaMat.uniforms.uLevel.value=lv;magmaMat.uniforms.uT.value=t;magmaMat.uniforms.uHeat.value=1+0.08*Math.sin(t*5);
+ deepGlow.intensity=c*3.0;
+ // bubbles: seg2 tiny dots in chamber, seg3 growing in conduit, gone after blast
+ bubbles.forEach((b,j)=>{const u=b.userData;
+  if(t<S[2].start-0.2||t>TB+0.3){b.visible=false;return;}b.visible=true;
+  if(t<S[3].start){const k=pop((t-S[2].start-0.6-u.o*1.5)/0.4);b.position.x=u.cx+Math.sin(t*1.3+u.o*9)*6;b.position.y=u.cy+Math.cos(t*1.1+u.o*7)*4;b.scale.setScalar(2.2*k);return;}
+  const ph=(t*0.45+u.o)%1;const top=Math.min(lv,HT-30),bot=CH_Y+CH_RY*.6;const y=lerp(bot,top,ph);
+  b.position.set(u.x*CW*0.7,y,1.6);const grow=lerp(2,CW*0.62,clamp((y+120)/380))*(0.6+0.4*u.o);b.scale.setScalar(grow);});
+ // eruption
+ const et=t-TB;
+ glow.intensity=et>0?lerp(0,9,Math.exp(-et*0.25))+2*Math.sin(t*20)*Math.exp(-et):(t>S[3].start?ease((t-S[3].start)/(TB-S[3].start))*2:0);
+ rocks.forEach(m=>{const u=m.userData;const tt=et-u.d*0.25;if(tt<0||tt>5.5){m.visible=false;return;}m.visible=true;
+  const y=HT+u.vy*tt-200*tt*tt;if(y<0){m.visible=false;return;}m.position.set(u.vx*tt,y,u.vz*tt);m.rotation.set(tt*3+u.d,tt*2,0);});
+ fire.forEach(m=>{const u=m.userData;const ft=(et-u.d*0.12);const per=(t>S[5].start)?(et>0?((et*1.3+u.d)%1.4):0):ft;
+  const tt=t>S[5].start?per*0.55:ft;if(et<0||tt<0||tt>2.5){m.visible=false;return;}m.visible=true;
+  const k=t>S[5].start?0.35:1;const y=HT-10+u.vy*k*tt-220*tt*tt;if(y<HT-40){m.visible=false;return;}m.position.set(u.vx*k*tt,y,u.vz*k*tt);m.rotation.set(tt*5,tt*4,0);});
+ ash.forEach(m=>{const u=m.userData;const tt=et-u.d*0.5;if(tt<0){m.visible=false;return;}m.visible=true;
+  const rise=Math.min(1,tt/7);const y=HT+20+u.h*1300*eout(rise)+tt*tt*9;const spread=30+u.h*260*eout(rise)+tt*u.r*20;
+  m.position.set(Math.cos(u.a)*spread*u.r-tt*tt*14,y,Math.sin(u.a)*spread*u.r-tt*30);const s=u.s*(0.4+eout(rise)*(0.8+u.h*1.6));m.scale.setScalar(s);});
+ // lava flows on the slope (seg5)
+ flows.forEach(f=>{const k=ease((t-S[5].start-0.4-f.d)/4.0);const n=Math.floor(f.n*k/6)*6;f.m.geometry.setDrawRange(0,n);});
+ lavaMat.emissiveIntensity=1.1+0.25*Math.sin(t*3);
+ // camera
+ const s=S[i];const lt=t-(s.start-0.3);let [p,g]=camPose(i,t);
+ if(i>0&&lt<1.3){const [pp,pg]=camPose(i-1,t);const e=ease(lt/1.3);p=pp.lerp(p,e);g=pg.lerp(g,e);}
+ const sh=shakeAt(t);if(sh>0){p.x+=Math.sin(t*61)*24*sh;p.y+=Math.cos(t*47)*20*sh;}
+ camera.position.copy(p);camera.lookAt(g);camera.updateMatrixWorld();
+ renderer.render(scene,camera);ctx.drawImage(glc,0,0);
+ // flash at the blast
+ if(et>0&&et<0.6){ctx.fillStyle=`rgba(255,220,160,${(1-et/0.6)*0.7})`;ctx.fillRect(0,0,W,H);}
+ const gr=ctx.createLinearGradient(0,1280,0,H);gr.addColorStop(0,'rgba(20,10,18,0)');gr.addColorStop(1,'rgba(20,10,18,.6)');ctx.fillStyle=gr;ctx.fillRect(0,1280,W,640);
+ // overlays
+ if(i===0){const k=pop((t-0.2)/0.45);if(k>0){ctx.save();ctx.translate(W/2,330);ctx.rotate(-0.03);ctx.scale(k,k);txt('WHY DO VOLCANOES',0,-60,120,'#fff','center',1000,18,INK);
+   const g=ctx.createLinearGradient(0,10,0,130);g.addColorStop(0,YEL);g.addColorStop(1,HOT);txt('EXPLODE?',0,70,190,g,'center',1000,20,INK);ctx.restore();}
+  if(t>CUT-0.3)tag(['CROSS-SECTION'],W/2,640,pop((t-CUT+0.3)/0.4),72,YEL);}
+ if(i===1){pin(V(-120,CH_Y+20,1),['MAGMA','MELTED ROCK'],pop((t-S[1].start-0.3)/0.4),330,330);
+  const k=pop((t-S[1].start-2.6)/0.4);if(k>0){tag(['LIGHTER THAN ROCK','RISES SLOWLY ↑'],690,560,k,64,YEL);}}
+ if(i===2){bottle(250,480,pop((t-S[2].start-1.0)/0.4),t,false);
+  gauge(800,430,0.85+0.03*Math.sin(t*4),'PRESSURE',pop((t-S[2].start-3.6)/0.4));}
+ if(i===3){const pr=lerp(0.85,0.12,ease((t-S[3].start-0.4)/4.5));gauge(800,360,pr,'PRESSURE',1);
+  tag(['GAS → BUBBLES'],330,330,pop((t-S[3].start-2.2)/0.4),70);}
+ if(i===4){if(t<TB)tag(['THICK + STICKY','TRAPS THE GAS'],W/2,330,pop((t-S[4].start-0.1)/0.4),70);
+  if(et>0){const k=pop(et/0.3);ctx.save();ctx.translate(W/2,420);ctx.rotate(-0.06);ctx.scale(k*(1+0.05*Math.sin(t*30)*Math.exp(-et*2)),k);
+   const g=ctx.createLinearGradient(0,-120,0,120);g.addColorStop(0,'#fff3b0');g.addColorStop(.5,YEL);g.addColorStop(1,HOT);txt('BOOM!',0,0,300,g,'center',1000,26,INK);ctx.restore();}}
+ if(i===5){const lt=t-S[5].start;tag(['RUNNY MAGMA','GAS ESCAPES GENTLY'],W/2,300,pop((lt-0.2)/0.4),66,YEL);
+  const k=pop((lt-3.4)/0.4);if(k>0){const v=Math.round(lerp(0,800,ease((lt-3.5)/1.2))),v2=Math.round(lerp(0,1200,ease((lt-4.4)/1.3)));
+   ctx.save();ctx.translate(W/2,560);ctx.scale(k,k);ctx.fillStyle='rgba(20,10,18,.88)';rr(-430,-105,860,210,24);ctx.fill();ctx.strokeStyle=HOT;ctx.lineWidth=6;ctx.stroke();
+   const g=ctx.createLinearGradient(0,-80,0,80);g.addColorStop(0,YEL);g.addColorStop(1,HOT);
+   txt(v.toLocaleString('en-US')+' – '+v2.toLocaleString('en-US')+' °C',0,-10,140,g,'center',820);txt('LAVA TEMPERATURE',0,72,46,'#fff','center',820);ctx.restore();}}
+ if(i>=6){const k=pop((t-S[6].start+0.2)/0.4);ctx.save();ctx.translate(W/2,1755);ctx.scale(k,k);ctx.fillStyle=HOT;rr(-330,-70,660,140,20);ctx.fill();ctx.strokeStyle=YEL;ctx.lineWidth=6;ctx.stroke();txt('SUBSCRIBE',0,6,104,'#fff','center',620,0);ctx.restore();}
+ drawCaption(t);
+ return out.toDataURL('image/jpeg',0.9);
+};
+await document.fonts.load('400 40px B');await document.fonts.load('800 40px M');
+window.READY=true;
+</script></body></html>

@@ -1,0 +1,19 @@
+{
+ "voice": "am_adam",
+ "speed": 1.05,
+ "lines": [
+  {"say": "Why do some volcanoes explode, while others just ooze? Let's cut one open.", "caption": "Why do volcanoes explode?", "pause_before": 0.3,
+   "cap": "Why do some volcanoes explode, while others just ooze? Let's cut one open."},
+  {"say": "Deep underground, hot rock melts into magma. It's lighter than the rock around it, so it slowly rises.", "caption": "Magma rises",
+   "cap": "Deep underground, hot rock melts into magma. It's lighter than the rock around it, so it slowly rises."},
+  {"say": "Magma is full of dissolved gas, like a sealed bottle of soda. The weight of the rock above keeps that gas squeezed in.", "caption": "Dissolved gas",
+   "cap": "Magma is full of dissolved gas, like a sealed bottle of soda. The weight of the rock above keeps that gas squeezed in."},
+  {"say": "But as the magma nears the surface, the pressure drops, and the gas turns into bubbles that grow fast.", "caption": "Bubbles grow",
+   "cap": "But as the magma nears the surface, the pressure drops, and the gas turns into bubbles that grow fast."},
+  {"say": "Thick, sticky magma traps those bubbles, until it all blasts out at once. Boom!", "caption": "Boom", "pause_before": 0.2,
+   "cap": "Thick, sticky magma traps those bubbles, until it all blasts out at once. Boom!"},
+  {"say": "Runny magma lets the gas escape gently, so the lava just flows, at around eight hundred to twelve hundred degrees Celsius.", "caption": "Lava flows", "pause_before": 0.4,
+   "cap": "Runny magma lets the gas escape gently, so the lava just flows, at around 800 to 1,200 °C."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}
