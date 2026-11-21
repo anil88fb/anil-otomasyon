@@ -16,7 +16,7 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 - `tts.py`: `script.json` → `voice.wav` + `timing.json` (segment start/end; scene timing follows the voice).
 - `render.py`: serves this folder on localhost, calls `renderAt(t)` per frame, pipes JPEGs to ffmpeg. ~0.35 s/frame on 2 CPUs.
 - `sfx.py`: music (chord pad, arpeggio, kick, hat) ducked under the voice, plus effects (whoosh, ding, ping, splash, rush, clunk, chime, riser, boom, bubbles). Put a `music.json` in the video folder to set bpm, chords, instrument and the effect plan per segment (see the docstring); without it the v01 plan is used. The second argument is a random seed.
-- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka (`/node_modules/@fontsource/<name>/files/...`).
+- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka, Oswald, JetBrains Mono, Baloo 2 (`/node_modules/@fontsource/<name>/files/...`).
 
 ## Videos made
 
@@ -28,6 +28,9 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 | videos/v04-volcano-eruption | Why Do Volcanoes Explode? | dusk island, cutaway with glowing magma + eruption, hazard tags, Bebas | am_adam |
 | videos/v05-tallest-buildings | The World's 5 Tallest Buildings | neon night city, towers rise one by one, meter HUD, Space Grotesk | bm_george |
 | videos/v06-octopus-5-facts | 5 Facts About Octopuses | sunlit coral reef, see-through octopus, cream fact cards, Montserrat | af_bella |
+| videos/v07-how-elevators-work | How Do Elevators Work? | dusk glass tower cutaway, sheave + counterweight, blueprint HUD, Oswald/JetBrains Mono, sepia Otis 1854 rig | am_liam |
+| videos/v08-how-big-is-the-sun | How Big Is the Sun? | deep space, Earth → Jupiter → Sun to scale, 1.3M-Earth fill, gold pills, Baloo 2 | bf_isabella |
+| videos/v09-honeybee-5-facts | 5 Facts About Honeybees | wildflower meadow + inside-the-hive comb, waggle dance, hexagon badges, Fredoka | af_sarah |
 
 ## Channel rules (standing decisions)
 

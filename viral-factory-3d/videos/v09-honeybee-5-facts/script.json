@@ -1,0 +1,19 @@
+{
+ "voice": "af_sarah",
+ "speed": 1.08,
+ "lines": [
+  {"say": "Five facts about honeybees that will change how you see them.", "caption": "5 honeybee facts", "pause_before": 0.3,
+   "cap": "Five facts about honeybees that will change how you see them."},
+  {"say": "One. Bees dance to give directions. The waggle dance tells the hive which way the flowers are, and how far.", "caption": "Waggle dance",
+   "cap": "One. Bees dance to give directions. The waggle dance tells the hive which way the flowers are, and how far."},
+  {"say": "Two. A honeybee has five eyes. Two big ones, and three tiny ones on top of its head.", "caption": "Five eyes",
+   "cap": "Two. A honeybee has five eyes. Two big ones, and three tiny ones on top of its head."},
+  {"say": "Three. Its wings beat about two hundred times every second. That's the buzz you hear.", "caption": "200 beats a second",
+   "cap": "Three. Its wings beat about 200 times every second. That's the buzz you hear."},
+  {"say": "Four. One worker bee makes only about a twelfth of a teaspoon of honey in her whole life.", "caption": "1/12 teaspoon",
+   "cap": "Four. One worker bee makes only about a twelfth of a teaspoon of honey in her whole life."},
+  {"say": "Five. Bees shiver their flight muscles to keep the nursery warm, at about thirty-five degrees Celsius.", "caption": "35 °C",
+   "cap": "Five. Bees shiver their flight muscles to keep the nursery warm, at about 35 °C."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "voice": "bf_isabella",
+ "speed": 1.06,
+ "lines": [
+  {"say": "How big is the Sun, really? Let's put the Earth right next to it.", "caption": "How big is the Sun?", "pause_before": 0.3,
+   "cap": "How big is the Sun, really? Let's put the Earth right next to it."},
+  {"say": "This is Earth. About twelve thousand seven hundred kilometers wide.", "caption": "Earth",
+   "cap": "This is Earth. About 12,700 kilometers wide."},
+  {"say": "Here's Jupiter, the biggest planet. About eleven Earths across.", "caption": "Jupiter",
+   "cap": "Here's Jupiter, the biggest planet. About 11 Earths across."},
+  {"say": "Now the Sun. You could line up one hundred and nine Earths across its face.", "caption": "The Sun",
+   "cap": "Now the Sun. You could line up 109 Earths across its face."},
+  {"say": "Fill it up, and about one point three million Earths would fit inside.", "caption": "1.3 million",
+   "cap": "Fill it up, and about 1.3 million Earths would fit inside."},
+  {"say": "It holds ninety-nine point eight percent of all the mass in our solar system.", "caption": "99.8%",
+   "cap": "It holds 99.8% of all the mass in our solar system."},
+  {"say": "And yet, it's just an ordinary star, called a yellow dwarf.", "caption": "Yellow dwarf",
+   "cap": "And yet, it's just an ordinary star, called a yellow dwarf."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "voice": "am_liam",
+ "speed": 1.08,
+ "lines": [
+  {"say": "How does a metal box carry you up a skyscraper so easily? Let's cut the shaft open.", "caption": "How do elevators work?", "pause_before": 0.3,
+   "cap": "How does a metal box carry you up a skyscraper so easily? Let's cut the shaft open."},
+  {"say": "At the top sits an electric motor that turns a grooved wheel, called a sheave.", "caption": "Motor + sheave",
+   "cap": "At the top sits an electric motor that turns a grooved wheel, called a sheave."},
+  {"say": "Steel ropes run over that wheel. One end holds the car.", "caption": "Steel ropes",
+   "cap": "Steel ropes run over that wheel. One end holds the car."},
+  {"say": "The other end holds a heavy counterweight. It weighs about as much as the car when it's forty percent full.", "caption": "Counterweight",
+   "cap": "The other end holds a heavy counterweight. It weighs about as much as the car when it's 40% full."},
+  {"say": "So when the car goes up, the counterweight goes down, and the motor only has to lift the difference.", "caption": "Balance",
+   "cap": "So when the car goes up, the counterweight goes down, and the motor only has to lift the difference."},
+  {"say": "And if the car ever drops too fast, a governor trips safety brakes that clamp onto the rails.", "caption": "Safety brakes",
+   "cap": "And if the car ever drops too fast, a governor trips safety brakes that clamp onto the rails."},
+  {"say": "Elisha Otis proved it in New York in 1854. He rode the platform up high, and had the rope cut.", "caption": "Otis, 1854",
+   "cap": "Elisha Otis proved it in New York in 1854. He rode the platform up high, and had the rope cut."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}
