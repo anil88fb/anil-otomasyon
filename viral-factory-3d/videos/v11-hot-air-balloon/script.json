@@ -1,0 +1,21 @@
+{
+ "voice": "af_nova",
+ "speed": 1.1,
+ "lines": [
+  {"say": "How does a giant bag of hot air lift people into the sky?", "caption": "Hot air balloon", "pause_before": 0.3,
+   "cap": "How does a giant bag of hot air lift people into the sky?"},
+  {"say": "A burner blasts a propane flame up into the balloon and heats the air inside.", "caption": "Burner",
+   "cap": "A burner blasts a propane flame up into the balloon and heats the air inside."},
+  {"say": "Hot air spreads out. At about one hundred degrees, it's roughly a fifth lighter than the cool air outside.", "caption": "Lighter air",
+   "cap": "Hot air spreads out. At about 100 °C, it's roughly a fifth lighter than the cool air outside."},
+  {"say": "The heavier cool air pushes the balloon up, just like water pushes up a cork.", "caption": "Lift",
+   "cap": "The heavier cool air pushes the balloon up, just like water pushes up a cork."},
+  {"say": "To come down, the pilot opens a vent at the top and lets hot air escape.", "caption": "Vent",
+   "cap": "To come down, the pilot opens a vent at the top and lets hot air escape."},
+  {"say": "Balloons can't steer. Pilots climb or sink to catch winds blowing a different way.", "caption": "Wind",
+   "cap": "Balloons can't steer. Pilots climb or sink to catch winds blowing a different way."},
+  {"say": "And the very first passengers, in 1783? A sheep, a duck and a rooster.", "caption": "1783",
+   "cap": "And the very first passengers, in 1783? A sheep, a duck and a rooster."},
+  {"say": "Subscribe for more whys.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more whys."}
+ ]
+}

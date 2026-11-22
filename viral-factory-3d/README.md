@@ -31,6 +31,9 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 | videos/v07-how-elevators-work | How Do Elevators Work? | dusk glass tower cutaway, sheave + counterweight, blueprint HUD, Oswald/JetBrains Mono, sepia Otis 1854 rig | am_liam |
 | videos/v08-how-big-is-the-sun | How Big Is the Sun? | deep space, Earth → Jupiter → Sun to scale, 1.3M-Earth fill, gold pills, Baloo 2 | bf_isabella |
 | videos/v09-honeybee-5-facts | 5 Facts About Honeybees | wildflower meadow + inside-the-hive comb, waggle dance, hexagon badges, Fredoka | af_sarah |
+| videos/v10-deepest-hole | How Deep Have We Dug? | rock-layer cutaway slab, Burj flipped underground, Mponeng mine, Kola borehole, cutaway Earth; copper/slate cards + depth gauge, Montserrat/Space Grotesk | bm_lewis |
+| videos/v11-hot-air-balloon | How Does a Hot Air Balloon Fly? | sunrise valley, see-through envelope with hot vs cool air particles, vent, two wind layers, 1783 Montgolfier with sheep/duck/rooster; white cards with coral edge, Baloo 2 | af_nova |
+| videos/v12-shark-5-facts | 5 Facts About Sharks | dusk open ocean, x-ray cartilage skeleton, tooth conveyor, electric-sense rings, Greenland shark under sea ice; navy + lime, Bebas/Oswald | am_onyx |
 
 ## Channel rules (standing decisions)
 

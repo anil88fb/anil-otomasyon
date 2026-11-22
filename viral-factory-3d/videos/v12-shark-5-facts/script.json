@@ -1,0 +1,19 @@
+{
+ "voice": "am_onyx",
+ "speed": 1.1,
+ "lines": [
+  {"say": "Five facts about sharks that sound made up.", "caption": "5 facts", "pause_before": 0.3,
+   "cap": "Five facts about sharks that sound made up."},
+  {"say": "One. Sharks are older than trees. They've been around for more than four hundred million years.", "caption": "Older than trees",
+   "cap": "One. Sharks are older than trees. They've been around for more than 400 million years."},
+  {"say": "Two. They have no bones. Their skeleton is cartilage, the same stuff as your nose and ears.", "caption": "No bones",
+   "cap": "Two. They have no bones. Their skeleton is cartilage, the same stuff as your nose and ears."},
+  {"say": "Three. They never run out of teeth. Lost teeth are replaced again and again, thousands in a lifetime.", "caption": "Teeth",
+   "cap": "Three. They never run out of teeth. Lost teeth are replaced again and again, thousands in a lifetime."},
+  {"say": "Four. They can sense electricity. Tiny pores on the snout pick up the faint signals of a hidden fish's muscles.", "caption": "Electric sense",
+   "cap": "Four. They can sense electricity. Tiny pores on the snout pick up the faint signals of a hidden fish's muscles."},
+  {"say": "Five. The Greenland shark can live at least two hundred and seventy years, maybe close to four hundred.", "caption": "Greenland shark",
+   "cap": "Five. The Greenland shark can live at least 270 years, maybe close to 400."},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more."}
+ ]
+}

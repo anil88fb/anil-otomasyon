@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:M;src:url(/node_modules/@fontsource/montserrat/files/montserrat-latin-800-normal.woff2);font-weight:800}
+@font-face{font-family:M;src:url(/node_modules/@fontsource/montserrat/files/montserrat-latin-600-normal.woff2);font-weight:600}
+@font-face{font-family:G;src:url(/node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2);font-weight:700}
+body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W=1080,H=1920;
+const TIMING=await (await fetch('timing.json')).json();
+const SCRIPT=await (await fetch('script.json')).json();
+const S=TIMING.segments;
+// v10 "How Deep Have We Dug?" — cutaway slab of rock layers (1 unit = 27.6 m, linear), inverted Burj, Mponeng mine, Kola borehole; then a cutaway Earth. Copper/slate palette, Montserrat + Space Grotesk depth gauge.
+function hash(x,y){let h=(x|0)*374761393+(y|0)*668265263;h=(h^(h>>>13))*1274126177;return ((h^(h>>>16))>>>0)/4294967295;}
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>x<=0?0:x>=1?1:x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const lerp=(a,b,k)=>a+(b-a)*k;
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const U=828/30; // meters per unit
+const KY=-12262/U, MY=-4000/U, BY=-828/U;
+const glc=document.createElement('canvas');glc.width=W;glc.height=H;
+const renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H,false);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();scene.background=new THREE.Color('#8fd3e8');
+const camera=new THREE.PerspectiveCamera(45,W/H,0.1,20000);
+scene.add(new THREE.HemisphereLight('#fff6e0','#3a2a2a',1.3));
+{const d=new THREE.DirectionalLight('#ffffff',1.6);d.position.set(-80,120,200);scene.add(d);}
+function glowTex(c0,c1){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');const gr=g.createRadialGradient(64,64,0,64,64,64);
+ gr.addColorStop(0,c0);gr.addColorStop(.4,c1);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
+const std=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.85},o));
+// ---------- rock slab ----------
+const LAY=[[0,-4,'#5a3d24'],[-4,-60,'#a8794a'],[-60,-180,'#c4955a'],[-180,-330,'#8e7d84'],[-330,-1500,'#5e4860']];
+const slab=new THREE.Group();scene.add(slab);
+LAY.forEach(([a,b,c])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(900,a-b,60),std(c));m.position.set(0,(a+b)/2,-30);slab.add(m);});
+// rock chunks on the front face
+{const n=1400;const g=new THREE.DodecahedronGeometry(1,0);const im=new THREE.InstancedMesh(g,std('#ffffff'),n);const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();const col=new THREE.Color();
+ for(let i=0;i<n;i++){const x=(hash(i,1)-.5)*296,y=-hash(i,2)*495-1;const L=LAY.find(l=>y<=l[0]&&y>l[1]);col.set(L[2]).offsetHSL((hash(i,3)-.5)*.04,0,(hash(i,4)-.5)*.16);
+  if(y<-380)col.lerp(new THREE.Color('#c24a2a'),clamp((-380-y)/120)*.5);
+  const s=1+hash(i,5)*(y<-60?3.5:1.6);e.set(hash(i,6)*6,hash(i,7)*6,hash(i,8)*6);q.setFromEuler(e);m.compose(V(x,y,0.2),q,V(s,s*.7,s*.5));im.setMatrixAt(i,m);im.setColorAt(i,col);}
+ scene.add(im);}
+// surface: grass, trees, houses
+{const g=new THREE.Mesh(new THREE.BoxGeometry(900,1.2,60),std('#5fb04a'));g.position.set(0,0.6,-30);scene.add(g);
+ const tg=new THREE.ConeGeometry(1.6,4.5,6),tk=new THREE.CylinderGeometry(.35,.35,1.4,5);
+ for(let i=0;i<70;i++){const x=(hash(i,30)-.5)*290,z=-hash(i,31)*58;if(Math.abs(x-60)<8||Math.abs(x)<8||Math.abs(x+60)<6)continue;const s=.7+hash(i,32)*.8;
+  const t=new THREE.Mesh(tg,std(hash(i,33)>.5?'#2f8a3e':'#3f9e4a'));t.position.set(x,1.2+1.4*s+2*s,z);t.scale.setScalar(s);scene.add(t);
+  const k=new THREE.Mesh(tk,std('#6b4524'));k.position.set(x,1.2+.7*s,z);k.scale.setScalar(s);scene.add(k);}
+ for(let i=0;i<10;i++){const x=-130+i*28+hash(i,40)*6,z=-10-hash(i,41)*40;if(Math.abs(x-60)<10||Math.abs(x)<10||Math.abs(x+60)<8)continue;
+  const h=new THREE.Mesh(new THREE.BoxGeometry(4,3,4),std(['#f2e3c6','#e9c79b','#f7f1e4'][i%3]));h.position.set(x,2.7,z);scene.add(h);
+  const r=new THREE.Mesh(new THREE.ConeGeometry(3.4,2,4),std('#b5452f'));r.position.set(x,5.2,z);r.rotation.y=Math.PI/4;scene.add(r);}}
+// dark shaft strips behind features
+function shaft(x,y0,y1,w){const m=new THREE.Mesh(new THREE.BoxGeometry(w,y0-y1,1),std('#1d1418'));m.position.set(x,(y0+y1)/2,0.9);scene.add(m);return m;}
+// ---------- Burj Khalifa (pivot at ground, flips upside down) ----------
+const BX=-60;const burj=new THREE.Group();burj.position.set(BX,0,3);scene.add(burj);
+{const glass=std('#bcd6ea',{metalness:.6,roughness:.25,emissive:'#20405a',emissiveIntensity:.25});let y=0;
+ [[3.2,7],[2.6,6],[2.0,5],[1.5,4],[1.0,3],[.6,2.5]].forEach(([r,h])=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(r*.85,r,h,6),glass);c.position.y=y+h/2;burj.add(c);y+=h;});
+ const sp=new THREE.Mesh(new THREE.CylinderGeometry(.08,.35,30-y,5),glass);sp.position.y=y+(30-y)/2;burj.add(sp);}
+const burjShaft=shaft(BX,0,BY-1,9);
+// ---------- Mponeng mine ----------
+const mine=new THREE.Group();scene.add(mine);
+shaft(0,0,MY,4);
+{const steel=std('#d8d2c4',{metalness:.5,roughness:.4});for(const sx of[-2.4,2.4]){const l=new THREE.Mesh(new THREE.BoxGeometry(.5,14,.5),steel);l.position.set(sx,7,2);l.rotation.z=sx>0?.12:-.12;mine.add(l);}
+ for(let k=0;k<4;k++){const b=new THREE.Mesh(new THREE.BoxGeometry(5-k*.5,.35,.35),steel);b.position.set(0,2+k*3.5,2);mine.add(b);}
+ const wh=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.4,.5,16),std('#c0392b'));wh.rotation.x=Math.PI/2;wh.position.set(0,14.2,2.3);mine.add(wh);
+ const hut=new THREE.Mesh(new THREE.BoxGeometry(7,4,5),std('#e0b04a'));hut.position.set(-7,3.2,-3);mine.add(hut);}
+const tunnels=[];[[MY,-40,40],[MY+40,-30,26],[MY+80,-22,18]].forEach(([y,a,b])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(b-a,3,1),std('#1d1418'));m.position.set((a+b)/2,y+1.5,0.95);scene.add(m);tunnels.push(m);});
+const lamps=[];{const lt=glowTex('rgba(255,230,150,1)','rgba(255,170,60,.5)');for(let i=0;i<18;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:lt,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+ const r=[[MY,-40,40],[MY+40,-30,26],[MY+80,-22,18]][i%3];sp.position.set(lerp(r[1]+2,r[2]-2,hash(i,60)),r[0]+2.6,1.8);sp.scale.set(3,3,1);scene.add(sp);lamps.push(sp);}}
+const cage=new THREE.Mesh(new THREE.BoxGeometry(2.6,3.4,1.2),std('#f2c14e',{emissive:'#7a5200',emissiveIntensity:.4}));cage.position.set(0,-10,1.6);scene.add(cage);
+// ---------- Kola borehole ----------
+const KX=60;const rig=new THREE.Group();rig.position.set(KX,1.2,1);scene.add(rig);
+{for(let k=0;k<6;k++){const s=new THREE.Mesh(new THREE.CylinderGeometry(1.8-k*.25,2.1-k*.25,2.4,4),std(k%2?'#ffffff':'#d63a2f'));s.position.y=1.2+k*2.4;s.rotation.y=Math.PI/4;rig.add(s);}
+ const b=new THREE.Mesh(new THREE.BoxGeometry(9,2.4,6),std('#3d6e8c'));b.position.set(-6,1.2,-3);rig.add(b);}
+const holeM=new THREE.MeshBasicMaterial({color:'#ff5a2a',toneMapped:false});
+const hole=new THREE.Mesh(new THREE.BoxGeometry(.9,1,1),holeM);hole.position.set(KX,0,1.3);scene.add(hole);
+const holeBack=new THREE.Mesh(new THREE.BoxGeometry(3,1,1),std('#1d1418'));holeBack.position.set(KX,0,0.9);scene.add(holeBack);
+const bit=new THREE.Mesh(new THREE.ConeGeometry(1.4,3,6),std('#e8e2d0',{metalness:.7,roughness:.3}));bit.rotation.x=Math.PI;scene.add(bit);
+const heat=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex('rgba(255,200,90,1)','rgba(255,70,20,.55)'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));heat.position.set(KX,KY,2);scene.add(heat);
+// ---------- cutaway Earth (far away) ----------
+const EP=V(4000,0,0),ER=100;const earthG=new THREE.Group();earthG.position.copy(EP);scene.add(earthG);
+{const R=[[1,'#3f9e4a'],[.985,'#7a4a2e'],[.546,'#ff7a1a'],[.19,'#ffe08a']];const rings=[[1,.985,'#8a5a36'],[.985,.546,'#e0502a'],[.546,.19,'#ffa22a'],[.19,0,'#fff2b0']];
+ const crust=new THREE.Mesh(new THREE.SphereGeometry(ER,48,32,Math.PI/2,1.5*Math.PI),new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:.8,side:THREE.DoubleSide}));
+ {const p=crust.geometry.attributes.position;const col=new Float32Array(p.count*3);for(let k=0;k<p.count;k++){const x=p.getX(k)/ER,y=p.getY(k)/ER,z=p.getZ(k)/ER;const n=Math.sin(x*5+Math.sin(y*4))*Math.cos(y*3+z*2)+.5*Math.sin(z*6+x*2);
+  const c=new THREE.Color(Math.abs(y)>.88?'#f4f8ff':n>.35?'#4fae55':'#2f7fd0');col.set([c.r,c.g,c.b],k*3);}crust.geometry.setAttribute('color',new THREE.BufferAttribute(col,3));}
+ earthG.add(crust);
+ rings.forEach(([a,b,c])=>{const m=new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,toneMapped:false});
+  const r1=new THREE.Mesh(new THREE.RingGeometry(b*ER,a*ER,64,1,Math.PI/2,Math.PI),m);earthG.add(r1);
+  const r2=new THREE.Mesh(new THREE.RingGeometry(b*ER,a*ER,64,1,-Math.PI/2,Math.PI),m);r2.rotation.y=-Math.PI/2;earthG.add(r2);});
+ const core=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex('rgba(255,250,210,1)','rgba(255,170,60,.4)'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));core.scale.set(70,70,1);earthG.add(core);}
+const pin=new THREE.Mesh(new THREE.ConeGeometry(2.2,7,8),new THREE.MeshBasicMaterial({color:'#ff3b2a',toneMapped:false}));pin.rotation.z=0;earthG.add(pin);pin.position.set(-0.01,ER+3.5,0.01);pin.rotation.x=Math.PI;
+const space=[];{const n=2500,pos=new Float32Array(n*3);for(let i=0;i<n;i++){const u=hash(i,90)*2-1,a=hash(i,91)*6.283,r=3000;const s=Math.sqrt(1-u*u);pos.set([EP.x+Math.cos(a)*s*r,u*r,Math.sin(a)*s*r],i*3);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));const pts=new THREE.Points(g,new THREE.PointsMaterial({size:2.4,sizeAttenuation:false,color:'#ffffff'}));scene.add(pts);}
+// ---------- camera ----------
+function seg(t){let k=0;for(const s of S)if(t>=s.start-0.3)k=s.i;return k;}
+function camPose(i,t){const lt=t-(S[i].start-0.3),d=S[i].end-S[i].start+0.3;const e=ease(lt/d);
+ switch(i){
+  case 0:return [V(lerp(-20,-30,e),lerp(120,8,e),lerp(260,110,e)),V(lerp(0,-40,e),lerp(0,-12,e),0)];
+  case 1:return [V(lerp(-48,-66,e),lerp(2,-16,e),lerp(70,58,e)),V(BX,lerp(4,-15,e),0)];
+  case 2:return [V(lerp(-30,6,e),lerp(-50,MY+14,e),lerp(160,95,e)),V(lerp(-20,0,e),lerp(-70,MY+18,e),0)];
+  case 3:{const k=clamp(lt/(d*.62));const tip=KY*ease(k);const z=ease(clamp((lt-d*.6)/(d*.4)));
+   return [V(lerp(KX+18,0,z),lerp(tip+16,-250,z),lerp(80,800,z)),V(lerp(KX,0,z),lerp(tip,-300,z),0)];}
+  case 4:return [V(lerp(KX+40,KX+10,e),lerp(KY+40,KY+4,e),lerp(170,34,e)),V(KX,KY+2,0)];
+  case 5:{const a=lerp(-.25,-.85,e);const r=lerp(430,480,e);return [V(EP.x+Math.sin(a)*r*1.0,lerp(60,110,e),Math.cos(a)*r),V(EP.x,lerp(40,60,e),0)];}
+  default:{const a=-.85-e*.5;const r=lerp(480,700,e);return [V(EP.x+Math.sin(a)*r,lerp(110,160,e),Math.cos(a)*r),V(EP.x,lerp(60,40,e),0)];}
+ }}
+// ---------- overlay ----------
+const out=document.getElementById('out');const ctx=out.getContext('2d');
+const CU='#ff9d3c',SL='#1b1a22',WH='#ffffff',RD='#ff5a2a';
+function txt(s,x,y,size,fill=WH,align='center',w=1000,stroke=0,sc=SL,font='M',weight=800){ctx.font=`${weight} ${size}px ${font}`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.lineJoin='round';
+ if(stroke){ctx.lineWidth=stroke;ctx.strokeStyle=sc;ctx.strokeText(s,x,y,w);}ctx.fillStyle=fill;ctx.fillText(s,x,y,w);}
+function pop(x){if(x<=0)return 0;if(x>=1)return 1;return 1+2.2*Math.pow(x-1,3)+1.2*Math.pow(x-1,2);}
+function project(v){const p=v.clone().project(camera);return {x:(p.x+1)/2*W,y:(1-p.y)/2*H,z:p.z};}
+function card(x,y,title,sub,k,accent=CU){if(k<=0)return;ctx.save();ctx.translate(x,y);ctx.scale(k,k);ctx.font='800 74px M';const w1=ctx.measureText(title).width;ctx.font='600 40px M';const w2=sub?ctx.measureText(sub).width:0;
+ const w=Math.max(w1,w2)+90,h=sub?190:130;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=30;ctx.fillStyle='rgba(27,26,34,.92)';ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,22);ctx.fill();ctx.shadowBlur=0;
+ ctx.fillStyle=accent;ctx.beginPath();ctx.roundRect(-w/2,-h/2,18,h,[22,0,0,22]);ctx.fill();
+ txt(title,-w/2+50,sub?-h/2+64:4,74,accent,'left',2000);if(sub)txt(sub,-w/2+50,h/2-48,40,WH,'left',2000,0,SL,'M',600);ctx.restore();}
+function gauge(depth,k){if(k<=0)return;ctx.save();ctx.globalAlpha=k;const x=70,y0=560,y1=1360;ctx.fillStyle='rgba(27,26,34,.72)';ctx.beginPath();ctx.roundRect(x-30,y0-60,120,y1-y0+120,24);ctx.fill();
+ ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=3;for(let m=0;m<=12000;m+=1000){const y=lerp(y0,y1,m/12262);ctx.beginPath();ctx.moveTo(x+30,y);ctx.lineTo(x+(m%4000?50:70),y);ctx.stroke();}
+ const y=lerp(y0,y1,depth/12262);ctx.fillStyle=CU;ctx.fillRect(x+22,y0,14,y-y0);
+ ctx.beginPath();ctx.moveTo(x+90,y);ctx.lineTo(x+120,y-18);ctx.lineTo(x+120,y+18);ctx.fill();
+ const label='−'+Math.round(depth).toLocaleString('en-US')+' m';ctx.font='700 58px G';const lw=ctx.measureText(label).width+40;
+ ctx.fillStyle='rgba(27,26,34,.92)';ctx.beginPath();ctx.roundRect(x+124,y-42,lw,84,16);ctx.fill();txt(label,x+144,y+3,58,WH,'left',800,0,SL,'G',700);ctx.restore();}
+const CAP=[];SCRIPT.lines.forEach((l,i)=>{const s=S[i];const words=(l.cap||l.say).split(/\s+/);const wt=w=>/\d/.test(w)?w.length*3.0:w.length+1;
+ const total=words.reduce((a,w)=>a+wt(w),0);let acc=0;const ws=words.map(w=>{const st=s.start+(s.end-s.start)*acc/total;acc+=wt(w);return {w,st,en:s.start+(s.end-s.start)*acc/total};});
+ for(let k=0;k<ws.length;k+=3)CAP.push(ws.slice(k,k+3));});
+function drawCaption(t){const c=CAP.find(c=>t>=c[0].st&&t<c[c.length-1].en+0.15);if(!c)return;
+ const y=1560,size=92;ctx.font=`800 ${size}px M`;const sp=26;const parts=c.map(o=>o.w);const widths=parts.map(p=>ctx.measureText(p).width);
+ const tot=widths.reduce((a,b)=>a+b,0)+sp*(parts.length-1);const sc=Math.min(1,960/tot);
+ ctx.save();ctx.translate(W/2,y);ctx.scale(sc,sc);ctx.fillStyle='rgba(27,26,34,.82)';ctx.beginPath();ctx.roundRect(-tot/2-40,-80,tot+80,160,30);ctx.fill();let x=-tot/2;
+ parts.forEach((p,j)=>{const on=t>=c[j].st&&(t<c[j].en||j===c.length-1);txt(p,x+widths[j]/2,6,size,on?CU:WH,'center',2000);
+  if(on){const b=pop((t-c[j].st)/0.16);ctx.fillStyle=CU;ctx.fillRect(x,58,widths[j]*b,10);}x+=widths[j]+sp;});
+ ctx.restore();}
+window.renderAt=function(t){
+ const i=seg(t);const L=t2=>pop((t-t2)/0.4);
+ // burj flip
+ const fk=ease(clamp((t-S[1].start-0.2)/1.5));burj.rotation.z=Math.PI*fk;burj.position.y=0;burjShaft.visible=fk>.5;
+ // mine cage
+ cage.position.y=lerp(-6,MY+2,ease(clamp((t-S[2].start)/(S[2].end-S[2].start))));
+ lamps.forEach((l,j)=>{const s=2.6+.6*Math.sin(t*5+j);l.scale.set(s,s,1);});
+ // drill
+ const dk=i<3?0:ease(clamp((t-(S[3].start-0.3))/((S[3].end-S[3].start+0.3)*.62)));const tip=KY*dk;
+ hole.scale.y=Math.max(.01,-tip);hole.position.y=tip/2;holeBack.scale.y=Math.max(.01,-tip);holeBack.position.y=tip/2;hole.visible=holeBack.visible=dk>0.001;
+ bit.position.set(KX,tip-1.5,1.8);bit.rotation.y=t*8;bit.visible=dk>0.001&&i<5;
+ const hk=i===4?1:(i===3?clamp((dk-.8)*5):0);heat.material.opacity=hk;const hs=(18+4*Math.sin(t*4))*(i===4?1:hk*1.5);heat.scale.set(hs,hs,1);
+ scene.background.set(i>=5?'#05060f':'#8fd3e8');
+ // camera
+ const lt=t-(S[i].start-0.3);let [p,g]=camPose(i,t);
+ if(i>0&&i!==5&&lt<0.9){const [pp,pg]=camPose(i-1,t);const e=ease(lt/0.9);p=pp.lerp(p,e);g=pg.lerp(g,e);}
+ camera.position.copy(p);camera.lookAt(g);camera.updateMatrixWorld();
+ renderer.render(scene,camera);ctx.drawImage(glc,0,0);
+ const gr=ctx.createLinearGradient(0,1340,0,H);gr.addColorStop(0,'rgba(10,8,14,0)');gr.addColorStop(1,'rgba(10,8,14,.55)');ctx.fillStyle=gr;ctx.fillRect(0,1340,W,580);
+ // flash into the Earth shot
+ const fl=1-clamp(Math.abs(t-(S[5].start-0.3))/0.35);if(fl>0){ctx.fillStyle=`rgba(255,255,255,${fl})`;ctx.fillRect(0,0,W,H);}
+ // depth gauge
+ let depth=0;if(i===1)depth=828*fk;else if(i===2)depth=lerp(828,4000,ease(clamp((t-S[2].start)/(S[2].end-S[2].start-0.5))));else if(i===3)depth=Math.max(4000,12262*dk);else if(i===4)depth=12262;
+ if(i>=1&&i<=4)gauge(depth,i===1?L(S[1].start):1);
+ if(i===0){const k=L(0.2);const o=1-clamp((t-S[0].end+0.2)/0.4);if(k>0&&o>0){ctx.save();ctx.globalAlpha=o;ctx.translate(W/2,420);ctx.scale(k,k);
+   ctx.fillStyle='rgba(27,26,34,.9)';ctx.beginPath();ctx.roundRect(-430,-170,860,330,34);ctx.fill();ctx.fillStyle=CU;ctx.fillRect(-430,140,860,20);
+   txt('HOW DEEP',0,-70,130,WH,'center',820);txt('HAVE WE DUG?',0,60,110,CU,'center',820);ctx.restore();}}
+ if(i===1)card(W/2+90,330,'828 m','Burj Khalifa, upside down',L(S[1].start+1.4));
+ if(i===2)card(W/2+90,330,'≈ 4 km','Mponeng gold mine, South Africa',L(S[2].start+0.6));
+ if(i===3){card(W/2+90,330,'12,262 m','Kola Superdeep Borehole, Russia',L(S[3].start+0.5),RD);
+  if(dk>.98){const pb=project(V(BX,BY,0)),pm=project(V(0,MY,0)),pk=project(V(KX,KY,0));const k=L(S[3].start+ (S[3].end-S[3].start)*.75);
+   [[pb,'828 m'],[pm,'4 km'],[pk,'12.3 km']].forEach(([q,s],j)=>{if(k>0){ctx.save();ctx.translate(q.x+(j===2?-120:110),q.y);ctx.scale(k*.8,k*.8);ctx.font='700 52px G';const w=ctx.measureText(s).width+36;ctx.fillStyle=j===2?RD:CU;ctx.beginPath();ctx.roundRect(-w/2,-34,w,68,14);ctx.fill();txt(s,0,3,52,SL,'center',600,0,SL,'G',700);ctx.restore();}});}}
+ if(i===4){card(W/2+90,330,'23 cm wide',null,L(S[4].start+0.4));card(W/2+90,500,'180 °C',null,L(S[4].start+2.6),RD);
+  const q=project(V(KX,KY+6,1.3));const k=L(S[4].start+0.6);if(k>0){ctx.save();ctx.strokeStyle=WH;ctx.lineWidth=6;ctx.globalAlpha=Math.min(1,k);ctx.beginPath();ctx.arc(q.x,q.y,60+8*Math.sin(t*5),0,7);ctx.stroke();ctx.restore();}}
+ if(i===5){card(W/2,330,'6,371 km','to the center of the Earth',L(S[5].start+0.3));
+  const k=L(S[5].start+3.2);if(k>0){ctx.save();ctx.translate(W/2,1250);ctx.scale(k,k);ctx.fillStyle='rgba(27,26,34,.9)';ctx.beginPath();ctx.roundRect(-460,-120,920,240,28);ctx.fill();
+   txt('SURFACE',-410,-62,34,WH,'left',300,0,SL,'G',700);txt('CENTER',410,-62,34,WH,'right',300,0,SL,'G',700);
+   ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(-410,-25,820,46);ctx.fillStyle=RD;ctx.fillRect(-410,-25,Math.max(3,820*0.0019),46);
+   txt('Kola: 0.19%',-410,70,52,CU,'left',800,0,SL,'G',700);ctx.restore();}
+  const pp=project(V(EP.x,ER+12,0));const kk=L(S[5].start+0.8);if(kk>0)txt('▼ deepest hole',pp.x,pp.y-50,44,WH,'center',600,10,SL);}
+ if(i>=6){card(W/2,330,'Barely a scratch',null,L(S[6].start+0.1));card(W/2,1760-200,'SUBSCRIBE',null,L(S[6].start+1.6));}
+ drawCaption(t);
+ return out.toDataURL('image/jpeg',0.9);
+};
+await document.fonts.load('800 40px M');await document.fonts.load('600 40px M');await document.fonts.load('700 40px G');
+window.READY=true;
+</script></body></html>

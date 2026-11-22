@@ -1,0 +1,43 @@
+{
+ "voice": "bm_lewis",
+ "speed": 1.1,
+ "lines": [
+  {
+   "say": "What's the deepest hole humans have ever dug? Let's drill down.",
+   "caption": "Deepest hole",
+   "pause_before": 0.3,
+   "cap": "What's the deepest hole humans have ever dug? Let's drill down."
+  },
+  {
+   "say": "Flip the Burj Khalifa upside down. That's eight hundred and twenty-eight meters.",
+   "caption": "828 m",
+   "cap": "Flip the Burj Khalifa upside down. That's 828 meters."
+  },
+  {
+   "say": "The deepest mine, Mponeng in South Africa, goes about four kilometers down.",
+   "caption": "4 km",
+   "cap": "The deepest mine, Mponeng in South Africa, goes about 4 kilometers down."
+  },
+  {
+   "say": "But the record is the Kola Superdeep Borehole in Russia. Twelve thousand, two hundred and sixty-two meters.",
+   "caption": "12,262 m",
+   "cap": "But the record is the Kola Superdeep Borehole in Russia. 12,262 meters."
+  },
+  {
+   "say": "It's only twenty-three centimeters wide, and the rock down there hit one hundred and eighty degrees Celsius.",
+   "caption": "180 C",
+   "cap": "It's only 23 centimeters wide, and the rock down there hit 180 \u00b0C."
+  },
+  {
+   "say": "Earth's center is six thousand, three hundred and seventy-one kilometers down. We got less than zero point two percent of the way.",
+   "caption": "0.2%",
+   "cap": "Earth's center is 6,371 kilometers down. We got less than 0.2% of the way."
+  },
+  {
+   "say": "We've barely scratched the surface. Subscribe for more whys.",
+   "caption": "Subscribe",
+   "pause_before": 0.3,
+   "cap": "We've barely scratched the surface. Subscribe for more whys."
+  }
+ ]
+}
