@@ -46,6 +46,8 @@ def _get(url: str, params=None, delay: float = 1.0, tries: int = 3) -> requests.
                 time.sleep(delay)
                 return r
             last = f"HTTP {r.status_code}"
+            if r.status_code in (401, 403, 429):  # erişim reddi: zorlamadan bırak
+                break
         except requests.RequestException as e:
             last = e
         time.sleep(15 * (attempt + 1))
@@ -120,7 +122,12 @@ class Store:
         covered = {m["comp"] for m in matches if m["iddaa"]}  # yalnızca iddaa'da oynanan turnuvalar
         rows = [r for r in finished_rows(matches) if r[1] in covered]
         used = {r[1] for r in rows}
-        payload = {"comps": {k: v for k, v in comps.items() if k in used}, "rows": rows}
+        names = {}
+        for m in matches:
+            names[m["home"]], names[m["away"]] = m["hn"], m["an"]
+        teams = {t for r in rows for t in (r[2], r[3])}
+        payload = {"comps": {k: v for k, v in comps.items() if k in used}, "rows": rows,
+                   "teams": {t: names[t] for t in teams if t in names}}
         with gzip.open(self.path(d), "wt", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
 
@@ -129,7 +136,7 @@ class Store:
 
     def update(self, today: date, window: int = 28, delay: float = 2.0) -> int:
         """Son 3 günü yeniler, son `window` gün içindeki eksik günleri tamamlar.
-        Art arda 3 hata alınınca durur; kalanlar sonraki çalıştırmada denenir."""
+        Maçkolik isteği reddederse hemen durur; kalanlar sonraki çalıştırmada denenir."""
         n = fails = 0
         todo = [today - timedelta(days=k) for k in range(1, 4)]
         todo += [d for d in self.missing(today, window) if d not in todo]
@@ -141,12 +148,18 @@ class Store:
             except Exception as e:  # sonraki çalıştırmada tekrar denenir
                 fails += 1
                 log.warning("%s indirilemedi: %s", d, e)
+                if any(c in str(e) for c in ("401", "403", "429")):
+                    break  # erişim reddedildi: zorlamadan bırak
         days = len(list(self.root.glob("*.json.gz")))
         log.info("Maçkolik: %d gün indirildi, arşivde %d gün var", n, days)
         return days
 
-    def load(self, since: date) -> tuple[list[list], dict]:
-        rows, comps = [], {}
+    def days(self) -> set[date]:
+        return {date.fromisoformat(p.name[:10]) for p in self.root.glob("*.json.gz")}
+
+    def load(self, since: date) -> tuple[list[list], dict, dict]:
+        """(maçlar, turnuvalar, takım adları)"""
+        rows, comps, names = [], {}, {}
         for p in sorted(self.root.glob("*.json.gz")):
             try:
                 if date.fromisoformat(p.name[:10]) < since:
@@ -157,11 +170,12 @@ class Store:
                 log.warning("Bozuk arşiv dosyası %s: %s", p.name, e)
                 continue
             comps.update(payload["comps"])
+            names.update(payload.get("teams", {}))
             for r in payload["rows"]:
                 r[1], r[2], r[3] = sys.intern(r[1]), sys.intern(r[2]), sys.intern(r[3])
                 rows.append(r)
         rows.sort(key=lambda r: r[0])
-        return rows, comps
+        return rows, comps, names
 
 
 _TEAM_IN_CREST = re.compile(r"/teams/([a-z0-9]+)")

@@ -23,7 +23,8 @@ def test_mackolik_parse_day():
 def test_store_roundtrip(tmp_path):
     st = mackolik.Store(tmp_path)
     st.save(date(2026, 11, 22), load("mackolik_2026-11-22.json")["data"])
-    rows, comps = st.load(date(2026, 1, 1))
+    rows, comps, names = st.load(date(2026, 1, 1))
+    assert names["86aq9jbei8h8p1ftxbmy8y2kk"] == "Bursaspor"
     assert any(r[2] == "86aq9jbei8h8p1ftxbmy8y2kk" and r[4] == 2 for r in rows)
     assert "2o9svokc5s7diish3ycrzk7jm" in comps
 
@@ -99,3 +100,37 @@ def test_model_sane():
     assert P.p1 > 0.7 and abs(P.p1 + P.px + P.p2 - 1) < 1e-9 and P.pick[0] > P.pick[1]
     P2 = model.predict(F, "A", "C", (0.75, 1, 1, 1))
     assert P2.lh < P.lh
+
+
+def test_tff_parse_still_works():
+    from skorbotu import tff
+    ms = tff.parse_week((FX / "lig1_hafta15.html").read_text("utf-8"))
+    assert len(ms) == 10 and ms[0]["h"] == "9387" and ms[0]["hg"] == 2
+
+
+def test_linker_maps_teams_and_converts():
+    from skorbotu import linker
+    names = {"m1": "Man. City", "m2": "Arsenal", "m3": "Iğdır FK", "m4": "Ümraniyespor", "x1": "Other A", "x2": "Other B"}
+    archive, src = [], []
+    for k, (h, a, hg, ag, sh, sa) in enumerate([
+        ("m1", "m2", 2, 1, "Man City", "Arsenal"), ("m2", "m1", 0, 0, "Arsenal", "Man City"),
+        ("m3", "m4", 2, 2, "ALAGÖZ HOLDİNG IĞDIR FUTBOL KULÜBÜ", "EMİNEVİM ÜMRANİYESPOR"),
+        ("m4", "m3", 1, 0, "EMİNEVİM ÜMRANİYESPOR", "ALAGÖZ HOLDİNG IĞDIR FUTBOL KULÜBÜ")]):
+        d = date(2026, 11, 10) + timedelta(days=k * 3)
+        archive.append([linker.noon_ts(d), "C1" if k < 2 else "C2", h, a, hg, ag, 0, 0])
+        archive.append([linker.noon_ts(d), "C9", "x1", "x2", hg, ag, 0, 0])  # aynı skorlu başka maç
+        src.append({"date": d.isoformat(), "h": sh, "a": sa, "hn": sh, "an": sa, "hg": hg, "ag": ag})
+    old = {"date": "2025-12-01", "h": "Man City", "a": "Leeds", "hn": "Man City", "an": "Leeds", "hg": 3, "ag": 0}
+    mapping, comp = linker.link("fd-E0", src[:2] + [old], archive, names)
+    assert mapping == {"Man City": "m1", "Arsenal": "m2"} and comp == "C1"
+    rows = linker.to_rows("fd-E0", src[:2] + [old], mapping, comp, linker.archive_keys(archive))
+    assert len(rows) == 1 and rows[0][2:4] == ["m1", "fd-E0:Leeds"]  # arşivdeki maçlar çift sayılmaz
+    mapping2, comp2 = linker.link("tr-1", src[2:], archive, names)
+    assert mapping2 == {"ALAGÖZ HOLDİNG IĞDIR FUTBOL KULÜBÜ": "m3", "EMİNEVİM ÜMRANİYESPOR": "m4"} and comp2 == "C2"
+
+
+def test_footballdata_new_format():
+    from skorbotu import footballdata
+    txt = "Country,League,Season,Date,Time,Home,Away,HG,AG,Res\nNorway,Eliteserien,2026,01/11/2026,17:00,Molde,Brann,2,1,H\n"
+    ms = footballdata.parse_csv(txt)
+    assert ms[0]["h"] == "Molde" and ms[0]["hg"] == 2 and ms[0]["date"] == "2026-11-01"
