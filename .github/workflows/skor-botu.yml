@@ -2,8 +2,7 @@ name: Skor tahmin botu
 
 on:
   schedule:
-    - cron: "17 6 * * *"    # her gün 09:17 (Türkiye saati): bülten
-    - cron: "43 */3 * * *"  # 3 saatte bir: geçmiş maç arşivini doldurur (arşiv tamamsa hemen biter)
+    - cron: "17 6 * * *"   # her gün 09:17 (Türkiye saati)
   pull_request:
     paths: ["skor-botu/**", ".github/workflows/skor-botu.yml"]
   workflow_dispatch:
@@ -12,6 +11,9 @@ on:
         description: "Telegram'a gönderme, sadece günlükte göster"
         type: boolean
         default: false
+      date:
+        description: "Tarih (YYYY-AA-GG), boş = bugün"
+        required: false
 
 permissions:
   contents: write
@@ -23,7 +25,7 @@ concurrency:
 jobs:
   bulten:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 40
     defaults:
       run:
         working-directory: skor-botu
@@ -36,44 +38,28 @@ jobs:
           cache-dependency-path: skor-botu/requirements.txt
       - run: pip install -r requirements.txt pytest
       - run: python -m pytest -q tests
-      # Geçmiş maç arşivi (Maçkolik) depoyu şişirmesin diye GitHub önbelleğinde tutulur.
-      # Önbellek silinirse bot arşivi kendiliğinden yeniden indirir.
-      - name: Maç arşivini geri yükle
-        uses: actions/cache/restore@v4
-        with:
-          path: skor-botu/data/mackolik
-          key: mackolik-${{ github.run_id }}
-          restore-keys: mackolik-
       - name: Bülteni oluştur ve gönder
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ github.event.schedule }}" = "43 */3 * * *" ]; then
-            python run.py --backfill-only --backfill-minutes 25
-            exit 0
-          fi
-          ARGS="--backfill-minutes 5"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then ARGS="--dry-run --backfill-minutes 15"; fi
+          ARGS=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then ARGS="--dry-run --date $(TZ=Europe/Istanbul date -d tomorrow +%F)"; fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
           python run.py $ARGS
-      - name: Maç arşivini kaydet
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: skor-botu/data/mackolik
-          key: mackolik-${{ github.run_id }}
       - name: Tam bülteni yükle
-        if: always() && github.event.schedule != '43 */3 * * *'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tahmin-bulteni
           path: skor-botu/out/*.html
           retention-days: 14
-      - name: Günün tahminlerini kaydet
-        if: github.event_name != 'pull_request' && github.event.schedule != '43 */3 * * *'
+      # Maçkolik yalnızca son ~4 haftayı verdiği için maç arşivi depoda biriktirilir.
+      - name: Arşivi ve günün tahminlerini kaydet
+        if: always() && github.event_name != 'pull_request'
         run: |
           git config user.name "skor-botu"
           git config user.email "skor-botu@users.noreply.github.com"
-          git add data/tahminler
-          git diff --cached --quiet || (git commit -m "skor-botu: günün tahminleri" && git pull --rebase && git push)
+          git add data
+          git diff --cached --quiet || (git commit -m "skor-botu: maç arşivi ve günün tahminleri" && git pull --rebase && git push)

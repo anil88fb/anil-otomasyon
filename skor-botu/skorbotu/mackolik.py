@@ -2,7 +2,8 @@
 
 Günlük sonuç listesi Maçkolik'in kendi canlı sonuç servisinden (JSON) alınır. Her maçta
 iddaa kodu da bulunur; böylece iddaa bülteniyle birebir eşleşir.
-Bitmiş günler data/mackolik/GGGG-AA-GG.json.gz dosyalarında saklanır, bir kez indirilir.
+Bitmiş günler data/mackolik/GGGG-AA-GG.json.gz dosyalarında saklanır. Maçkolik GitHub sunucularına
+yalnızca yaklaşık son 4 haftayı veriyor; bu yüzden arşiv her gün yeni günlerle büyür ve depoda tutulur.
 """
 from __future__ import annotations
 
@@ -116,37 +117,33 @@ class Store:
 
     def save(self, d: date, data: dict) -> None:
         matches, comps = parse_day(data)
-        rows = finished_rows(matches)
+        covered = {m["comp"] for m in matches if m["iddaa"]}  # yalnızca iddaa'da oynanan turnuvalar
+        rows = [r for r in finished_rows(matches) if r[1] in covered]
         used = {r[1] for r in rows}
         payload = {"comps": {k: v for k, v in comps.items() if k in used}, "rows": rows}
         with gzip.open(self.path(d), "wt", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
 
-    def missing(self, today: date, start: date) -> list[date]:
-        return [d for d in (today - timedelta(days=i) for i in range(1, (today - start).days + 1)) if not self.has(d)]
+    def missing(self, today: date, days: int) -> list[date]:
+        return [d for d in (today - timedelta(days=i) for i in range(1, days + 1)) if not self.has(d)]
 
-    def update(self, today: date, start: date, minutes: float, delay: float = 5.0, refresh: bool = True) -> int:
-        """Son 3 günü yeniler, sonra eksik geçmiş günleri yeniden eskiye doğru indirir.
-
-        Maçkolik sık isteği engellediği için istekler aralıklı yapılır, süre sınırı aşılınca ya da
-        art arda 3 hata alınınca durulur; kalan günler sonraki çalıştırmalarda tamamlanır.
-        """
-        t_end = time.monotonic() + minutes * 60
+    def update(self, today: date, window: int = 28, delay: float = 2.0) -> int:
+        """Son 3 günü yeniler, son `window` gün içindeki eksik günleri tamamlar.
+        Art arda 3 hata alınınca durur; kalanlar sonraki çalıştırmada denenir."""
         n = fails = 0
-        todo = self.missing(today, start)
-        if refresh:
-            todo = [today - timedelta(days=k) for k in range(1, 4)] + [d for d in todo if (today - d).days > 3]
+        todo = [today - timedelta(days=k) for k in range(1, 4)]
+        todo += [d for d in self.missing(today, window) if d not in todo]
         for d in todo:
-            if time.monotonic() > t_end or fails >= 3:
+            if fails >= 3:
                 break
             try:
                 self.save(d, fetch_day(d, delay=delay)); n += 1; fails = 0
             except Exception as e:  # sonraki çalıştırmada tekrar denenir
                 fails += 1
                 log.warning("%s indirilemedi: %s", d, e)
-        left = len(self.missing(today, start))
-        log.info("Maçkolik: %d gün indirildi, arşivde eksik %d gün", n, left)
-        return left
+        days = len(list(self.root.glob("*.json.gz")))
+        log.info("Maçkolik: %d gün indirildi, arşivde %d gün var", n, days)
+        return days
 
     def load(self, since: date) -> tuple[list[list], dict]:
         rows, comps = [], {}

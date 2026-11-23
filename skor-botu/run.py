@@ -3,7 +3,7 @@
 Kullanım:
   python run.py                    # bugünün bülteni (İstanbul saati), Telegram'a gönderir
   python run.py --dry-run          # göndermeden ekrana yazar, out/ klasörüne HTML bırakır
-  python run.py --backfill-only    # yalnızca geçmiş maç arşivini doldurur
+  python run.py --dry-run --date 2026-11-24   # belirli bir günün bülteni
 Ortam değişkenleri: TELEGRAM_TOKEN, TELEGRAM_CHAT_ID (virgülle birden çok sohbet/kanal)
 """
 from __future__ import annotations
@@ -19,27 +19,20 @@ from pathlib import Path
 from skorbotu import bulletin, engine, iddaa, mackolik, telegram
 
 ROOT = Path(__file__).parent
-HISTORY_START = date(2025, 7, 1)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--backfill-minutes", type=float, default=5, help="geçmiş arşivi doldurmaya ayrılan en çok süre")
-    ap.add_argument("--backfill-only", action="store_true", help="yalnızca arşivi doldur, bülten gönderme")
+    ap.add_argument("--date", help="YYYY-AA-GG: bu günün bülteni (varsayılan bugün)")
     ap.add_argument("--no-sidelined", action="store_true", help="eksik oyuncu sayfalarını çekme")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    day = datetime.now(mackolik.TZ).date()
+    today = datetime.now(mackolik.TZ).date()
+    day = date.fromisoformat(args.date) if args.date else today
     warnings: list[str] = []
 
     store = mackolik.Store(ROOT / "data" / "mackolik")
-    if args.backfill_only:
-        if not store.missing(day, HISTORY_START):
-            logging.info("Arşiv tamam, yapılacak iş yok")
-            return 0
-        store.update(day, HISTORY_START, args.backfill_minutes, refresh=False)
-        return 0
     # Önce bugünün eşleşmesi (en önemli adım), sonra kısa arşiv güncellemesi
     events = [ev for ev in iddaa.program() if mackolik.local_day(ev["ts"]) == day]
     mk, comps_today = {}, {}
@@ -54,9 +47,9 @@ def main() -> int:
     linked = sum(1 for ev in events if ev["id"] in mk)
     logging.info("Bugün bültende %d maç, %d tanesi Maçkolik ile eşleşti", len(events), linked)
 
-    missing = store.update(day, HISTORY_START, args.backfill_minutes)
-    if missing > 30:
-        warnings.append(f"Geçmiş maç arşivi henüz tamamlanmadı ({missing} gün eksik); tahminler arşiv doldukça güçlenecek.")
+    days = store.update(today)
+    if days < 120:
+        warnings.append(f"Geçmiş maç arşivi şimdilik {days} günlük; tahminler arşiv büyüdükçe güçlenecek.")
     rows, comps = store.load(day - timedelta(days=730))
     comps.update(comps_today)
     logging.info("Arşivde %d bitmiş maç", len(rows))
