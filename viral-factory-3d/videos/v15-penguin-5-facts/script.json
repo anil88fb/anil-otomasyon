@@ -1,0 +1,19 @@
+{
+ "voice": "bf_lily",
+ "speed": 1.2,
+ "lines": [
+  {"say": "Five facts about penguins you probably didn't know.", "caption": "5 facts", "pause_before": 0.3,
+   "cap": "Five facts about penguins you probably didn't know."},
+  {"say": "One. Emperor penguins can dive more than five hundred meters deep.", "caption": "Deep divers",
+   "cap": "One. Emperor penguins can dive more than 500 meters deep."},
+  {"say": "Two. Their tuxedo is camouflage: dark from above, bright from below.", "caption": "Camouflage",
+   "cap": "Two. Their tuxedo is camouflage: dark from above, bright from below."},
+  {"say": "Three. They can drink seawater. A gland filters out the salt, and it drips from their nose.", "caption": "Salt water",
+   "cap": "Three. They can drink seawater. A gland filters out the salt, and it drips from their nose."},
+  {"say": "Four. Emperor dads keep the egg on their feet for two months, without eating.", "caption": "Egg on feet",
+   "cap": "Four. Emperor dads keep the egg on their feet for two months, without eating."},
+  {"say": "Five. No penguins live in the Arctic. They're almost all in the south.", "caption": "South only",
+   "cap": "Five. No penguins live in the Arctic. They're almost all in the south."},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more."}
+ ]
+}

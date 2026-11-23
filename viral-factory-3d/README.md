@@ -16,7 +16,7 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 - `tts.py`: `script.json` → `voice.wav` + `timing.json` (segment start/end; scene timing follows the voice).
 - `render.py`: serves this folder on localhost, calls `renderAt(t)` per frame, pipes JPEGs to ffmpeg. ~0.35 s/frame on 2 CPUs.
 - `sfx.py`: music (chord pad, arpeggio, kick, hat) ducked under the voice, plus effects (whoosh, ding, ping, splash, rush, clunk, chime, riser, boom, bubbles). Put a `music.json` in the video folder to set bpm, chords, instrument and the effect plan per segment (see the docstring); without it the v01 plan is used. The second argument is a random seed.
-- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka, Oswald, JetBrains Mono, Baloo 2 (`/node_modules/@fontsource/<name>/files/...`).
+- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka, Oswald, JetBrains Mono, Baloo 2, Rubik, Lilita One, Nunito (`/node_modules/@fontsource/<name>/files/...`).
 
 ## Videos made
 
@@ -34,6 +34,9 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 | videos/v10-deepest-hole | How Deep Have We Dug? | rock-layer cutaway slab, Burj flipped underground, Mponeng mine, Kola borehole, cutaway Earth; copper/slate cards + depth gauge, Montserrat/Space Grotesk | bm_lewis |
 | videos/v11-hot-air-balloon | How Does a Hot Air Balloon Fly? | sunrise valley, see-through envelope with hot vs cool air particles, vent, two wind layers, 1783 Montgolfier with sheep/duck/rooster; white cards with coral edge, Baloo 2 | af_nova |
 | videos/v12-shark-5-facts | 5 Facts About Sharks | dusk open ocean, x-ray cartilage skeleton, tooth conveyor, electric-sense rings, Greenland shark under sea ice; navy + lime, Bebas/Oswald | am_onyx |
+| videos/v13-ears-pop-plane | Why Do Your Ears Pop on a Plane? | turquoise sky over a cloud sea, white/coral airliner climbing, then a see-through ear model (canal, bulging eardrum, air pocket, Eustachian tube) in a plum studio; boarding-pass cards + pressure gauges, Rubik | af_river |
+| videos/v14-how-submarines-dive | How Do Submarines Dive? | tropical lagoon, yellow see-through sub with ballast tanks flooding/blowing, vent bubbles, hydroplanes, breach splash; navy stickers with orange dots + depth dial, Lilita One | am_fenrir |
+| videos/v15-penguin-5-facts | 5 Facts About Penguins | Antarctic ice shelf under an aurora, emperor colony, deep dive, above/below camouflage swing, salt drip, dad with egg in a snowstorm, low-poly globe with the Arctic crossed out; frosted ice cards, Nunito | bf_lily |
 
 ## Channel rules (standing decisions)
 
@@ -41,6 +44,12 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 - Each video gets its own look, palette, voice and music: change `voice` in script.json (af_heart, am_michael, bf_emma, bm_george, am_adam, af_bella …), the scene and the chord set in `sfx.py`.
 - 2 videos a day at 15:00 and 21:00 Istanbul, uploaded and scheduled through vidIQ.
 - Facts must be checked with a web search before narration.
+
+## Schedule
+
+`SCHEDULE.md` lists every posting slot and its status; take the first free 15:00/21:00 Istanbul slot.
+
+Note: `npm i --no-save <pkg>` prunes other unsaved packages (three.js disappears); install every package in one command as `setup.sh` does.
 
 ## Upload
 

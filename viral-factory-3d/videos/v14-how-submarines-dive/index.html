@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:L;src:url(/node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2);font-weight:400}
+body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const W=1080,H=1920;
+const TIMING=await (await fetch('timing.json')).json();
+const SCRIPT=await (await fetch('script.json')).json();
+const S=TIMING.segments;
+// v14 "How Do Submarines Dive?" — tropical lagoon, yellow see-through submarine with ballast tanks that flood and blow,
+// hydroplanes, air flasks; coral seabed, fish, light shafts. Navy stickers with orange dots, depth dial, Lilita One.
+function hash(x,y){let h=(x|0)*374761393+(y|0)*668265263;h=(h^(h>>>13))*1274126177;return ((h^(h>>>16))>>>0)/4294967295;}
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>x<=0?0:x>=1?1:x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const lerp=(a,b,k)=>a+(b-a)*k;
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const glc=document.createElement('canvas');glc.width=W;glc.height=H;
+const renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H,false);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();
+const FOG_UP=new THREE.Fog('#bdf2ff',400,1600),FOG_DN=new THREE.Fog('#0b6f8f',20,230);
+const camera=new THREE.PerspectiveCamera(46,W/H,0.1,5000);
+scene.add(new THREE.HemisphereLight('#fffbe8','#2b7f9a',1.5));
+{const d=new THREE.DirectionalLight('#fff1c9',2.2);d.position.set(150,300,120);scene.add(d);}
+const std=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,flatShading:true,roughness:.7},o));
+function glowTex(c0,c1){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');const gr=g.createRadialGradient(64,64,0,64,64,64);
+ gr.addColorStop(0,c0);gr.addColorStop(.4,c1);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
+// sky
+const skyDome=(()=>{const g=new THREE.SphereGeometry(2400,32,16);const p=g.attributes.position;const col=new Float32Array(p.count*3);const a=new THREE.Color('#e8fbff'),b=new THREE.Color('#5fd0f0'),c=new THREE.Color('#1f8fe0');
+ for(let k=0;k<p.count;k++){const y=p.getY(k)/2400;const cc=y<.1?a.clone().lerp(b,clamp(y/.1)):b.clone().lerp(c,clamp((y-.1)/.5));col.set([cc.r,cc.g,cc.b],k*3);}
+ g.setAttribute('color',new THREE.BufferAttribute(col,3));const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide,fog:false,toneMapped:false}));scene.add(m);return m;})();
+const sun=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex('rgba(255,255,235,1)','rgba(255,240,170,.5)'),fog:false,transparent:true,depthWrite:false}));sun.position.set(-900,700,-1600);sun.scale.set(600,600,1);scene.add(sun);
+// islands on horizon
+for(let i=0;i<5;i++){const g=new THREE.Group();const isl=new THREE.Mesh(new THREE.ConeGeometry(60+hash(i,1)*60,30,8),std('#f2dc9b'));isl.position.y=-6;g.add(isl);
+ for(let k=0;k<4;k++){const tr=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.6,22,5),std('#8a5a33'));tr.position.set((hash(i,k+5)-.5)*40,14,(hash(i,k+9)-.5)*30);tr.rotation.z=(hash(i,k)-.5)*.4;g.add(tr);
+  const lf=new THREE.Mesh(new THREE.ConeGeometry(12,6,6),std('#2fae5a'));lf.position.set(tr.position.x,26,tr.position.z);g.add(lf);}
+ g.position.set(-600+i*330,0,-700-hash(i,3)*400);scene.add(g);}
+// water surface (two sides)
+const water=new THREE.Mesh(new THREE.PlaneGeometry(5000,5000,80,80),new THREE.MeshStandardMaterial({color:'#22c6d3',roughness:.25,metalness:.1,transparent:true,opacity:.78,side:THREE.DoubleSide,flatShading:true,depthWrite:false}));
+water.rotation.x=-Math.PI/2;scene.add(water);const wp0=water.geometry.attributes.position.array.slice();
+// seabed
+const BED=-120;
+{const g=new THREE.PlaneGeometry(3000,3000,60,60);const p=g.attributes.position;for(let k=0;k<p.count;k++)p.setZ(k,(hash(k,3)-.5)*6+Math.sin(p.getX(k)*.02)*8);g.computeVertexNormals();
+ const m=new THREE.Mesh(g,std('#f0d79a'));m.rotation.x=-Math.PI/2;m.position.y=BED;scene.add(m);}
+const kelp=[];
+{const cols=['#ff6f91','#ff9f43','#c56cf0','#ffd32a','#ff5e57','#7bed9f'];
+ for(let i=0;i<120;i++){const x=-300+hash(i,1)*700,z=-260+hash(i,2)*240;const c=cols[i%cols.length];const t=hash(i,3);let m;
+  if(t<.4){m=new THREE.Mesh(new THREE.IcosahedronGeometry(3+hash(i,4)*5,0),std(c));m.position.set(x,BED+3,z);}
+  else if(t<.7){m=new THREE.Mesh(new THREE.ConeGeometry(2+hash(i,4)*3,10+hash(i,5)*12,5),std(c));m.position.set(x,BED+6,z);}
+  else{m=new THREE.Mesh(new THREE.BoxGeometry(1.4,30+hash(i,5)*30,1.4),std('#2fbf71'));m.position.set(x,BED+15,z);kelp.push(m);}scene.add(m);}
+ for(let i=0;i<40;i++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(6+hash(i,8)*10,0),std('#8d99ae'));r.position.set(-300+hash(i,9)*700,BED+2,-260+hash(i,10)*260);scene.add(r);}}
+// light shafts
+const shafts=[];{const m=new THREE.MeshBasicMaterial({color:'#e9ffff',transparent:true,opacity:.07,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,fog:false});
+ for(let i=0;i<14;i++){const s=new THREE.Mesh(new THREE.PlaneGeometry(14+hash(i,1)*20,180),m);s.position.set(-200+hash(i,2)*500,-60,-120+hash(i,3)*120);s.rotation.z=.25;s.rotation.y=hash(i,4);scene.add(s);shafts.push(s);}}
+// fish schools
+const fishes=[];{const fg=new THREE.ConeGeometry(1,3.2,4);fg.rotateZ(-Math.PI/2);const fm=[std('#ffb703'),std('#fb8500'),std('#8ecae6')];
+ for(let i=0;i<70;i++){const f=new THREE.Mesh(fg,fm[i%3]);f.userData={g:i%3,o:hash(i,1)*6.28,r:hash(i,2)};scene.add(f);fishes.push(f);}}
+// ---------- submarine ----------
+const sub=new THREE.Group();scene.add(sub);
+const hullMat=new THREE.MeshStandardMaterial({color:'#ffc93c',roughness:.45,metalness:.15,flatShading:true,transparent:true,opacity:1,side:THREE.DoubleSide});
+{const pts=[];for(let k=0;k<=30;k++){const u=k/30;const x=-22+u*44;let r=6;if(u<.25)r=6*Math.sqrt(Math.sin(u/.25*Math.PI/2))*.92+.3;if(u>.8)r=6*Math.sqrt(Math.cos((u-.8)/.2*Math.PI/2))+.01;pts.push(new THREE.Vector2(Math.max(.05,r),x));}
+ const g=new THREE.LatheGeometry(pts,24);const h=new THREE.Mesh(g,hullMat);h.rotation.z=-Math.PI/2;sub.add(h);}
+const sailMat=hullMat;
+{const sail=new THREE.Mesh(new THREE.BoxGeometry(8,7,3.4),sailMat);sail.position.set(5,8.5,0);sub.add(sail);const top=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.7,8,12,1,false,0,Math.PI),sailMat);top.rotation.z=Math.PI/2;top.position.set(5,12,0);
+ const peri=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,6,6),std('#3d4b5c'));peri.position.set(6,14.5,0);sub.add(peri);const ph=new THREE.Mesh(new THREE.BoxGeometry(1.4,.8,.8),std('#3d4b5c'));ph.position.set(6.4,17.5,0);sub.add(ph);
+ const sp=new THREE.Mesh(new THREE.BoxGeometry(3,.4,12),std('#f39c12'));sp.position.set(5,9,0);sub.add(sp);}
+const PORTS=[];for(let k=0;k<6;k++)for(const s of [1,-1]){const ring=new THREE.Mesh(new THREE.TorusGeometry(1.1,.3,6,14),std('#3d4b5c'));PORTS.push(ring);ring.position.set(-10+k*4,2,5.6*s);sub.add(ring);
+ const gl=new THREE.Mesh(new THREE.CircleGeometry(1,14),new THREE.MeshBasicMaterial({color:'#bff6ff'}));PORTS.push(gl);gl.position.set(-10+k*4,2,5.62*s);if(s<0)gl.rotation.y=Math.PI;sub.add(gl);}
+// stern planes + rudder + prop
+const sternPlanes=new THREE.Group();sternPlanes.position.set(-19,0,0);sub.add(sternPlanes);{const p=new THREE.Mesh(new THREE.BoxGeometry(5,.5,16),std('#f39c12'));sternPlanes.add(p);}
+const bowPlanes=new THREE.Group();bowPlanes.position.set(14,1,0);sub.add(bowPlanes);{const p=new THREE.Mesh(new THREE.BoxGeometry(3.4,.45,17),std('#f39c12'));bowPlanes.add(p);}
+{const r=new THREE.Mesh(new THREE.BoxGeometry(4,10,.5),std('#f39c12'));r.position.set(-19.5,0,0);sub.add(r);}
+const prop=new THREE.Group();prop.position.set(-23,0,0);sub.add(prop);for(let k=0;k<5;k++){const b=new THREE.Mesh(new THREE.BoxGeometry(.4,4.4,1.2),std('#c0c8d0',{metalness:.7,roughness:.3}));b.rotation.x=k/5*Math.PI*2;b.translateY(1.8);prop.add(b);}
+// ballast tanks (front + rear) with water
+const tanks=[];[[11,7],[-12,8]].forEach(([cx,w])=>{const g=new THREE.Group();g.position.set(cx,-1,0);sub.add(g);
+ const glass=new THREE.Mesh(new THREE.BoxGeometry(w,7.5,7),new THREE.MeshStandardMaterial({color:'#e8fbff',transparent:true,opacity:.22,roughness:.1,depthWrite:false}));g.add(glass);
+ const ed=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,7.5,7)),new THREE.LineBasicMaterial({color:'#0b2545'}));g.add(ed);
+ const wt=new THREE.Mesh(new THREE.BoxGeometry(w-.3,1,6.7),new THREE.MeshStandardMaterial({color:'#1e90ff',transparent:true,opacity:.85,roughness:.2,emissive:'#0a3d80',emissiveIntensity:.4}));g.add(wt);
+ const vent=new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,1.2,10),std('#e63946'));vent.position.set(0,4.4,0);g.add(vent);
+ tanks.push({g,wt,vent,w});});
+const flasks=[];for(let k=0;k<2;k++){const f=new THREE.Mesh(new THREE.CapsuleGeometry(1.2,6,4,10),std('#2ecc71',{emissive:'#0d5c2e',emissiveIntensity:0}));f.rotation.z=Math.PI/2;f.position.set(-1,-2.6+k*2.8,0);sub.add(f);flasks.push(f);}
+const pipeMat=new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0});
+{const a=new THREE.Mesh(new THREE.BoxGeometry(16,.5,.5),pipeMat);a.position.set(0,-1,0);sub.add(a);}
+// bubbles
+const NB=160;const bG=new THREE.BufferGeometry();bG.setAttribute('position',new THREE.BufferAttribute(new Float32Array(NB*3),3));
+const bubbles=new THREE.Points(bG,new THREE.PointsMaterial({color:'#ffffff',size:14,sizeAttenuation:false,transparent:true,opacity:.9,toneMapped:false,fog:false}));scene.add(bubbles);
+const splash=[];{const m=std('#ffffff');for(let k=0;k<40;k++){const s=new THREE.Mesh(new THREE.IcosahedronGeometry(1,0),m);s.visible=false;scene.add(s);splash.push(s);}}
+// ---------- timeline ----------
+function seg(t){let k=0;for(const s of S)if(t>=s.start-0.3)k=s.i;return k;}
+function prog(i,t){return clamp((t-S[i].start)/(S[i].end-S[i].start));}
+const D_SINK=-55,D_HOV=-68;
+function subY(t){let y=0;
+ if(t>S[2].start+1.8)y=lerp(0,D_SINK,ease(clamp((t-S[2].start-1.8)/(S[2].end-S[2].start-1.2))));
+ if(t>S[3].start-0.3)y=lerp(D_SINK,D_HOV,ease(clamp((t-S[3].start+0.3)/2.2)))+Math.sin(t*1.2)*.5*clamp((t-S[3].start-2.2));
+ if(t>S[4].start-0.3)y=D_HOV+Math.sin(t*1.2)*.5;
+ if(t>S[5].start-0.6){const u=clamp((t-S[5].start+0.6)/1.5);y=lerp(D_HOV,8,Math.pow(u,1.6));if(u>=1){const v=t-(S[5].start+0.9);y=8*Math.exp(-v*2.2)*Math.cos(v*4);}}
+ return y;}
+function level(t){let l=.06;
+ if(t>S[2].start+.4)l=lerp(.06,.95,ease(clamp((t-S[2].start-.4)/2.4)));
+ if(t>S[4].start+0.6)l=lerp(.95,.08,ease(clamp((t-S[4].start-0.6)/2.4)));return l;}
+function pitch(t){let p=0;if(t>S[2].start+1.8&&t<S[3].start+2.0)p=-.12*Math.sin(clamp((t-S[2].start-1.8)/(S[3].start+2-(S[2].start+1.8)))*Math.PI);
+ if(t>S[5].start-0.6&&t<S[5].start+1.2)p=.22*Math.sin(clamp((t-S[5].start+0.6)/1.8)*Math.PI);return p;}
+function subX(t){return t*2.2;}
+function camPose(i,t){const lt=t-(S[i].start-0.3),d=S[i].end-S[i].start+0.3;const e=ease(lt/d);const b=V(subX(t),subY(t),0);
+ switch(i){
+  case 0:return [V(b.x+lerp(75,48,e),lerp(32,16,e),lerp(85,58,e)),V(b.x+lerp(0,2,e),b.y+lerp(5,3,e),0)];
+  case 1:return [V(b.x+lerp(-8,6,e),b.y+lerp(16,10,e),lerp(92,84,e)),V(b.x+lerp(-2,2,e),b.y-2,0)];
+  case 2:{const c=Math.min(b.y,0);return [V(b.x+lerp(6,0,e),c+lerp(12,-6,e),lerp(86,92,e)),V(b.x,b.y-2,0)];}
+  case 3:return [V(b.x+lerp(70,48,e),b.y+lerp(-12,-2,e),lerp(62,76,e)),V(b.x+lerp(-2,0,e),b.y+lerp(2,0,e),0)];
+  case 4:return [V(b.x+lerp(-6,4,e),b.y+lerp(8,4,e),lerp(88,82,e)),V(b.x,b.y-2,0)];
+  case 5:return [V(subX(t)+lerp(55,70,e),lerp(-52,-16,e),lerp(80,95,e)),V(b.x,b.y+lerp(0,8,e),0)];
+  default:return [V(b.x+lerp(-50,-90,e),lerp(20,48,e),lerp(80,140,e)),V(b.x,lerp(4,2,e),0)];
+ }}
+// ---------- overlay ----------
+const out=document.getElementById('out');const ctx=out.getContext('2d');
+const NV='#0b2545',OR='#ff8a00',WH='#ffffff',YE='#ffd23f',BL='#1e90ff';
+function txt(s,x,y,size,fill=WH,align='center',w=1000,stroke=0,sc=NV){ctx.font=`400 ${size}px L`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.lineJoin='round';
+ if(stroke){ctx.lineWidth=stroke;ctx.strokeStyle=sc;ctx.strokeText(s,x,y,w);}ctx.fillStyle=fill;ctx.fillText(s,x,y,w);}
+function pop(x){if(x<=0)return 0;if(x>=1)return 1;return 1+2.2*Math.pow(x-1,3)+1.2*Math.pow(x-1,2);}
+function project(v){const p=v.clone().project(camera);return {x:(p.x+1)/2*W,y:(1-p.y)/2*H,z:p.z};}
+function sticker(x,y,s,k,dot=OR,size=70,tx=null,ty=null){if(k<=0)return;
+ if(tx!==null){ctx.save();ctx.globalAlpha=clamp(k);ctx.strokeStyle=WH;ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(tx,ty);ctx.stroke();ctx.fillStyle=dot;ctx.beginPath();ctx.arc(tx,ty,16,0,7);ctx.fill();ctx.strokeStyle=WH;ctx.lineWidth=5;ctx.stroke();ctx.restore();}
+ ctx.save();ctx.translate(x,y);ctx.scale(k,k);ctx.font=`400 ${size}px L`;const w=ctx.measureText(s).width+110,h=size*1.55;
+ ctx.fillStyle=WH;ctx.beginPath();ctx.roundRect(-w/2-7,-h/2-7,w+14,h+14,h/2+7);ctx.fill();ctx.fillStyle=NV;ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,h/2);ctx.fill();
+ ctx.fillStyle=dot;ctx.beginPath();ctx.arc(-w/2+h/2,0,size*.22,0,7);ctx.fill();txt(s,22,4,size,WH,'center',2000);ctx.restore();}
+function dial(t,k,depth){if(k<=0)return;ctx.save();ctx.translate(170,1290);ctx.scale(k,k);ctx.fillStyle=WH;ctx.beginPath();ctx.arc(0,0,135,0,7);ctx.fill();ctx.fillStyle=NV;ctx.beginPath();ctx.arc(0,0,122,0,7);ctx.fill();
+ for(let j=0;j<=10;j++){const a=Math.PI*.75+j/10*Math.PI*1.5;ctx.strokeStyle=j>7?'#e63946':WH;ctx.lineWidth=j%5?4:8;ctx.beginPath();ctx.moveTo(Math.cos(a)*96,Math.sin(a)*96);ctx.lineTo(Math.cos(a)*114,Math.sin(a)*114);ctx.stroke();}
+ const a=Math.PI*.75+clamp(depth)*Math.PI*1.5+Math.sin(t*9)*.015;ctx.strokeStyle=OR;ctx.lineWidth=10;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*88,Math.sin(a)*88);ctx.stroke();
+ ctx.fillStyle=OR;ctx.beginPath();ctx.arc(0,0,14,0,7);ctx.fill();txt('DEPTH',0,70,40,WH,'center',300);ctx.restore();}
+const CAP=[];SCRIPT.lines.forEach((l,i)=>{const s=S[i];const words=(l.cap||l.say).split(/\s+/);const wt=w=>/\d/.test(w)?w.length*3.0:w.length+1;
+ const total=words.reduce((a,w)=>a+wt(w),0);let acc=0;const ws=words.map(w=>{const st=s.start+(s.end-s.start)*acc/total;acc+=wt(w);return {w,st,en:s.start+(s.end-s.start)*acc/total};});
+ for(let k=0;k<ws.length;k+=3)CAP.push(ws.slice(k,k+3));});
+function drawCaption(t){const c=CAP.find(c=>t>=c[0].st&&t<c[c.length-1].en+0.15);if(!c)return;
+ const y=1540,size=108;ctx.font=`400 ${size}px L`;const sp=44;const parts=c.map(o=>o.w);const widths=parts.map(p=>ctx.measureText(p).width);
+ const tot=widths.reduce((a,b)=>a+b,0)+sp*(parts.length-1);const sc=Math.min(1,980/tot);
+ ctx.save();ctx.translate(W/2,y);ctx.scale(sc,sc);let x=-tot/2;
+ parts.forEach((p,j)=>{const on=t>=c[j].st&&(t<c[j].en||j===c.length-1);const b=on?pop((t-c[j].st)/0.16):0;
+  ctx.save();ctx.translate(x+widths[j]/2,0);const s=on?1+.06*b:1;ctx.scale(s,s);txt(p,0,0,size,on?OR:WH,'center',2000,22,NV);ctx.restore();x+=widths[j]+sp;});
+ ctx.restore();}
+window.renderAt=function(t){
+ const i=seg(t);const L=t2=>pop((t-t2)/0.4);
+ const sy=subY(t),sx=subX(t);sub.position.set(sx,sy,0);sub.rotation.z=pitch(t);sub.rotation.x=Math.sin(t*.9)*.02;prop.rotation.x=t*8;
+ const pl=(i===3?-.35*Math.sin(prog(3,t)*Math.PI*2):0)+(i===5?.3:0);sternPlanes.rotation.z=pl;bowPlanes.rotation.z=-pl*.8;
+ // cutaway
+ const see=(i>=1&&i<=4)?clamp((t-S[1].start+0.1)/0.6)*(1-clamp((t-S[4].end+0.3)/0.5)):0;
+ hullMat.opacity=1-see*.72;PORTS.forEach(o=>o.visible=see<.1);hullMat.depthWrite=see<.1;tanks.forEach(tk=>tk.g.visible=see>.05);flasks.forEach(f=>f.visible=see>.05);
+ const lv=level(t);tanks.forEach(tk=>{tk.wt.scale.y=lv*7.2;tk.wt.position.y=-3.75+lv*3.6+.02;const vo=(i===2&&t<S[2].start+3)?1:0;tk.vent.position.y=4.4+vo*1.2;tk.vent.material.color.set(vo?'#2ecc71':'#e63946');});
+ const blow=i===4?clamp((t-S[4].start-0.3)/0.4):0;flasks.forEach(f=>f.material.emissiveIntensity=blow*(.6+.4*Math.sin(t*20)));pipeMat.opacity=blow*.9;
+ // bubbles: vent bubbles during flooding, blow-out bubbles under hull during blowing
+ {const bp=bG.attributes.position;const ventOn=i===2&&t<S[2].start+3.2;const blowOn=i===4&&t>S[4].start+0.6;
+  for(let k=0;k<NB;k++){const tk=tanks[k%2];const ph=((t*.8+hash(k,1))%1);let x=-9999,y=-9999,z=0;
+   if(ventOn){x=sx+tk.g.position.x+(hash(k,2)-.5)*2+Math.sin(t*5+k)*.5;y=sy+3.4+ph*30;z=(hash(k,3)-.5)*2;if(y>0)y=-9999;}
+   else if(blowOn){x=sx+tk.g.position.x+(hash(k,2)-.5)*tk.w;y=sy-5-ph*2+ph*ph*40;z=(hash(k,3)-.5)*6;if(y>-.5)y=-9999;}
+   bp.setXYZ(k,x,y,z);}bp.needsUpdate=true;}
+ // splash on breach
+ const bt=S[5].start+0.85;splash.forEach((s,k)=>{const u=t-bt;if(u<0||u>1.4){s.visible=false;return;}s.visible=true;const a=hash(k,1)*6.283,v=10+hash(k,2)*18;
+  s.position.set(sx+(hash(k,3)-.5)*30+Math.cos(a)*v*u*.6,Math.max(-2,v*u-14*u*u),Math.sin(a)*v*u*.6);s.scale.setScalar(1.5+hash(k,4)*1.5);});
+ // water waves
+ {const p=water.geometry.attributes.position;for(let k=0;k<p.count;k++){const x=wp0[k*3],y=wp0[k*3+1];p.setZ(k,Math.sin(x*.05+t*1.6)*.6+Math.cos(y*.06+t*1.3)*.6);}p.needsUpdate=true;}
+ kelp.forEach((k,j)=>k.rotation.z=Math.sin(t*1.2+j)*.12);
+ fishes.forEach((f,j)=>{const u=f.userData;const cx=[sx-40,sx+60,sx+10][u.g],cy=[-90,-100,-40][u.g],cz=[-50,-30,-80][u.g];const a=t*.5*(u.g===1?-1:1)+u.o;
+  f.position.set(cx+Math.cos(a)*(14+u.r*10),cy+Math.sin(a*2+j)*3,cz+Math.sin(a)*(10+u.r*8));f.rotation.y=-a+(u.g===1?Math.PI:0);});
+ // camera
+ const lt=t-(S[i].start-0.3);let [p,g]=camPose(i,t);
+ if(i>0&&i!==5&&lt<0.9){const [pp,pg]=camPose(i-1,t);const e=ease(lt/0.9);p=pp.lerp(p,e);g=pg.lerp(g,e);}
+ camera.position.copy(p);camera.lookAt(g);camera.updateMatrixWorld();
+ const under=camera.position.y<0;scene.fog=under?FOG_DN:FOG_UP;skyDome.visible=sun.visible=!under;renderer.setClearColor(under?'#0b6f8f':'#bdf2ff');shafts.forEach(s=>s.visible=under);
+ renderer.render(scene,camera);ctx.drawImage(glc,0,0);
+ if(under){ctx.fillStyle='rgba(0,60,90,.12)';ctx.fillRect(0,0,W,H);}
+ for(const tc of [S[5].start-0.3]){const fl=1-clamp(Math.abs(t-tc)/0.25);if(fl>0){ctx.fillStyle=`rgba(255,255,255,${fl})`;ctx.fillRect(0,0,W,H);}}
+ const P=v=>project(v);
+ if(i===0){const k=L(0.15);const o=1-clamp((t-S[0].end+0.15)/0.35);if(k>0&&o>0){ctx.save();ctx.globalAlpha=o;ctx.translate(W/2,400);ctx.rotate(-.04);ctx.scale(k,k);
+   txt('HOW DO',6,-118,100,OR,'center',900,0);txt('HOW DO',0,-124,100,WH,'center',900,18,NV);
+   txt('SUBMARINES',8,8,150,OR,'center',980,0);txt('SUBMARINES',0,0,150,YE,'center',980,22,NV);txt('DIVE?',8,138,150,OR,'center',900,0);txt('DIVE?',0,130,150,WH,'center',900,22,NV);ctx.restore();}}
+ if(i===1){const a=P(V(sx+11,sy+1,0)),b=P(V(sx-12,sy+1,0));const k=L(S[1].start+0.9);sticker(W/2,330,'Ballast tanks',L(S[1].start+0.5),OR,74);
+  if(k>0){ctx.save();ctx.globalAlpha=clamp(k);ctx.strokeStyle=WH;ctx.lineWidth=7;[a,b].forEach(q=>{ctx.beginPath();ctx.moveTo(W/2,400);ctx.lineTo(q.x,q.y-60);ctx.stroke();ctx.fillStyle=OR;ctx.beginPath();ctx.arc(q.x,q.y-60,16,0,7);ctx.fill();});ctx.restore();}}
+ if(i===2){const v=P(V(sx+11,sy+5,0));sticker(W/2,320,'Vents open',L(S[2].start+0.2),'#2ecc71',70,v.x,v.y);
+  if(t>S[2].start+2.4)sticker(W/2,520,'Heavier than water',L(S[2].start+2.4),BL,70);dial(t,L(S[2].start+1.6),-sy/90);}
+ if(i===3){const q=P(V(sx-19,sy,8));sticker(W/2,320,'Hydroplanes',L(S[3].start+0.3),OR,72,q.x,q.y);if(t>S[3].start+2.6)sticker(W/2,520,'Trim tanks: hover',L(S[3].start+2.6),YE,58);dial(t,1,-sy/90);}
+ if(i===4){const q=P(V(sx-1,sy-1,0));sticker(W/2,320,'Compressed air',L(S[4].start+0.2),'#2ecc71',68,q.x,q.y);if(t>S[4].start+1.8)sticker(W/2,520,'Water out',L(S[4].start+1.8),BL,66);dial(t,L(S[4].start),-sy/90);}
+ if(i===5){sticker(W/2,330,'Lighter than water',L(S[5].start+0.1),YE,76);dial(t,1,Math.max(0,-sy/90));}
+ if(i>=6){sticker(W/2,1770,'SUBSCRIBE',L(S[6].start-0.1),'#e63946',80);}
+ drawCaption(t);
+ return out.toDataURL('image/jpeg',0.9);
+};
+await document.fonts.load('400 40px L');
+window.READY=true;
+</script></body></html>

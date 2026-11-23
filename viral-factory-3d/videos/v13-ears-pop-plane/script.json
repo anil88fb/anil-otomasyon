@@ -1,0 +1,48 @@
+{
+ "voice": "af_river",
+ "speed": 1.18,
+ "lines": [
+  {
+   "say": "Why do your ears pop on a plane?",
+   "caption": "Ears pop",
+   "pause_before": 0.3,
+   "cap": "Why do your ears pop on a plane?"
+  },
+  {
+   "say": "As the plane climbs, the air in the cabin thins out, like on a mountain.",
+   "caption": "Thin air",
+   "cap": "As the plane climbs, the air in the cabin thins out, like on a mountain."
+  },
+  {
+   "say": "But behind your eardrum sits a pocket of air still at ground pressure.",
+   "caption": "Air pocket",
+   "cap": "But behind your eardrum sits a pocket of air still at ground pressure."
+  },
+  {
+   "say": "It pushes the eardrum out, and sounds go muffled.",
+   "caption": "Bulge",
+   "cap": "It pushes the eardrum out, and sounds go muffled."
+  },
+  {
+   "say": "A thin tube links that pocket to your throat. Swallow or yawn, and it opens.",
+   "caption": "The tube",
+   "cap": "A thin tube links that pocket to your throat. Swallow or yawn, and it opens."
+  },
+  {
+   "say": "Air rushes through, the pressure evens out, and pop!",
+   "caption": "Pop",
+   "cap": "Air rushes through, the pressure evens out, and POP!"
+  },
+  {
+   "say": "That's why chewing gum helps. More swallowing, more pops.",
+   "caption": "Gum",
+   "cap": "That's why chewing gum helps. More swallowing, more pops."
+  },
+  {
+   "say": "Subscribe for more whys.",
+   "caption": "Subscribe",
+   "pause_before": 0.3,
+   "cap": "Subscribe for more whys."
+  }
+ ]
+}

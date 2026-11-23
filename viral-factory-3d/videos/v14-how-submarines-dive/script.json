@@ -1,0 +1,19 @@
+{
+ "voice": "am_fenrir",
+ "speed": 1.12,
+ "lines": [
+  {"say": "How does a submarine sink on purpose, and then come back up?", "caption": "Submarine", "pause_before": 0.3,
+   "cap": "How does a submarine sink on purpose, and then come back up?"},
+  {"say": "The trick is a set of big tanks in its hull, called ballast tanks.", "caption": "Ballast tanks",
+   "cap": "The trick is a set of big tanks in its hull, called ballast tanks."},
+  {"say": "Open the vents, and seawater floods in. Now the sub is heavier than the water around it, so it dives.", "caption": "Flood",
+   "cap": "Open the vents, and seawater floods in. Now the sub is heavier than the water around it, so it dives."},
+  {"say": "Small wings called hydroplanes steer it, and trim tanks keep it hovering at depth.", "caption": "Hydroplanes",
+   "cap": "Small wings called hydroplanes steer it, and trim tanks keep it hovering at depth."},
+  {"say": "To surface, compressed air blasts into the tanks and forces the water out.", "caption": "Blow",
+   "cap": "To surface, compressed air blasts into the tanks and forces the water out."},
+  {"say": "Lighter again, it shoots back up.", "caption": "Surface",
+   "cap": "Lighter again, it shoots back up."},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3, "cap": "Subscribe for more."}
+ ]
+}
