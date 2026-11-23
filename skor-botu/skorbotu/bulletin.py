@@ -43,7 +43,9 @@ def message(recs: list[dict], day: date, warnings: list[str]) -> str:
         lines.append("\n⭐ <b>En net tahminler</b>")
         for r in strong:
             res, p, odd = best(r)
-            lines.append(f"{hhmm(r['ts'])} {e(r['hn'])} – {e(r['an'])}: <b>{res}</b> {pct(p)}" + (f" · oran {odd:.2f}" if odd else ""))
+            lines.append(f"{hhmm(r['ts'])} {e(r['hn'])} – {e(r['an'])}: <b>{res}</b> {pct(p)}" + (f" · oran {odd:.2f}" if odd else "") + (" ¹" if r.get("cross") else ""))
+    if any(r.get("cross") for r in strong):
+        lines.append("<i>¹ Kupa/Avrupa maçı: model, iddaa oranlarıyla yarı yarıya harmanlandı.</i>")
     vb = value_bets(recs)[:8]
     if vb:
         lines.append("\n💎 <b>Oranı modelden yüksek olanlar</b>")
@@ -128,6 +130,8 @@ def report(recs: list[dict], day: date) -> str:
             if r.get("mbs"):
                 extra.append(f"MBS {r['mbs']}")
             score = f'<span class="sc">{M["score"][0]}-{M["score"][1]}</span>' if M else '<span class="mut">yetersiz veri</span>'
+            if r.get("cross"):
+                score += '<span class="mut">kupa/Avrupa: model + oran harmanı</span>'
             body.append(
                 f'<div class="m" data-q="{e((r["hn"] + " " + r["an"] + " " + comp).lower())}"><div class="t">'
                 f'<span class="mut">{hhmm(r["ts"])}</span><b>{e(r["hn"])} – {e(r["an"])}</b>{score}</div>'

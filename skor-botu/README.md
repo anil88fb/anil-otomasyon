@@ -15,13 +15,16 @@ Her sabah 09:17'de (Türkiye saati) iddaa bültenindeki o günün **tüm futbol 
 |---|---|
 | iddaa.com bülteni | Günün maçları, oranlar, MBS |
 | Maçkolik canlı sonuçlar | iddaa'da oynanan tüm turnuvaların maç sonuçları (Türkiye'de Süper Lig'den 3. Lig'e, PGL ve amatöre kadar). Her maçta iddaa kodu olduğu için bülten maçlarıyla birebir eşleşir |
-| Maçkolik maç sayfası | Sakat ve cezalı oyuncular (oynadığı maç ve gol sayısıyla) |
+| Maçkolik maç sayfası | Sakat ve cezalı oyuncular (oynadığı maç ve gol sayısıyla); Maçkolik GitHub'dan gelen isteklerin bir kısmını reddettiği için her gün tüm maçlarda gelmeyebilir |
+| football-data.co.uk | Eski sezonlar: İngiltere (4 lig + National League), İskoçya (4), Almanya, İtalya, İspanya, Fransa (2'şer), Hollanda, Belçika, Portekiz, Türkiye, Yunanistan; ayrıca Arjantin, Avusturya, Brezilya, Çin, Danimarka, Finlandiya, İrlanda, Japonya, Meksika, Norveç, Polonya, Romanya, İsveç, İsviçre, ABD |
+| tff.org | Bu sezonun Süper Lig, 1. Lig, 2. Lig ve 3. Lig maçları (tüm gruplar) |
 | [penaltyblog](https://github.com/martineastwood/penaltyblog) | iddaa oranlarındaki kâr payını çıkarıp gerçek olasılığı hesaplamak (Shin yöntemi) |
 
 ## Model
 
 - Her takımın hücum ve savunma gücü geçmiş maçlardan hesaplanır, yakın tarihli maçlar daha ağır sayılır (Poisson + Dixon-Coles).
-- Kupa ve Avrupa maçlarında turnuvanın kendi maçları ile iki takımın liglerindeki maçlar birlikte kullanılır; böylece farklı liglerden takımlar karşılaştırılabilir.
+- Eski sezon kaynaklarındaki takımlar Maçkolik takımlarına iki yolla bağlanır: son haftalarda iki tarafta da görünen ortak maçlar (aynı gün, aynı skor, benzer ad) ve bugün/yarın oynayacak takımlar için ad benzerliği. Arşiv büyüdükçe eşleşme artar.
+- Kupa ve Avrupa maçlarında farklı liglerin gücü henüz yeterli veriyle karşılaştırılamadığı için model, iddaa oranlarından çıkan olasılıkla yarı yarıya harmanlanır ve bu maçlar "oranı modelden yüksek" listesine alınmaz. Modelin orandan çok uzaklaştığı seçenekler de (muhtemelen eksik veri) bu listeye girmez.
 - Eksik oyuncular: oyuncunun oynadığı maç oranı ve attığı gollerin takım içindeki payına göre hücum en çok %25 düşürülür, kaleci/defans eksikliğinde savunma en çok %25 zayıflatılır. Bu kaba bir kuraldır, geçmiş verilerle test edilmedi.
 - Son bir yılda 5'ten az maçı olan takımlar için tahmin yapılmaz ("yetersiz veri"), yalnızca oranlar gösterilir.
 - Geriye dönük test (Avrupa ligleri, Ağustos 2025'ten bu yana): 1-X-2 isabeti ortalama %54. penaltyblog'un Dixon-Coles modeli de aynı maçlarda denendi; Premier League, La Liga ve Bundesliga'da bu modelden biraz daha zayıf kaldığı için kullanılmadı.

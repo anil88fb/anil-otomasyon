@@ -136,30 +136,45 @@ def analyse(events: list[dict], mk_matches: dict, hist: History, with_sidelined:
             rec["notes"] = {"home": hn, "away": an}
             rec["absent"] = {"home": len(side["home"]), "away": len(side["away"])}
         P = model.predict(F, m["home"], m["away"], adj)
-        rec["model"] = {
+        M = {
             "p": [P.p1, P.px, P.p2], "score": list(P.pick), "xg": [P.lh, P.la],
             "o25": P.over25, "btts": P.btts, "top": [list(s) for s in P.top], "ht": list(P.ht),
         }
+        # Kupa / Avrupa maçları: ligler arası güç farkı az veriyle ölçülemediği için oranlarla harmanlanır
+        rec["cross"] = hist.comps.get(m["comp"], ["", "", ""])[2] != LEAGUE or len({hist.main_league(m["home"]), hist.main_league(m["away"])}) > 1
+        if rec["cross"] and rec["market"]:
+            M["p"] = [(a + b) / 2 for a, b in zip(M["p"], rec["market"])]
+            mo, mk_ = devig(e.get("ou25")), devig(e.get("kg"))
+            if mo:
+                M["o25"] = (M["o25"] + mo[1]) / 2
+            if mk_:
+                M["btts"] = (M["btts"] + mk_[0]) / 2
+            k = max(range(3), key=lambda i: M["p"][i])
+            ok = {0: lambda x: x[0] > x[1], 1: lambda x: x[0] == x[1], 2: lambda x: x[0] < x[1]}[k]
+            M["score"] = next((list(x[:2]) for x in M["top"] if ok(x)), M["score"])
+        rec["model"] = M
         out.append(rec)
     return out
 
 
-def value_bets(recs: list[dict], min_ev: float = 0.08) -> list[tuple]:
-    """Model olasılığı × iddaa oranı - 1 ≥ min_ev olan seçenekler (beklenen kazanç)."""
+def value_bets(recs: list[dict], min_ev: float = 0.08, max_gap: float = 0.15) -> list[tuple]:
+    """Model olasılığı × iddaa oranı - 1 ≥ min_ev olan seçenekler (beklenen kazanç).
+    Kupa/Avrupa maçları ve modelin orandan çok uzaklaştığı (muhtemelen eksik veri) durumlar hariç."""
     out = []
     for r in recs:
         M = r.get("model")
-        if not M:
+        if not M or r.get("cross"):
             continue
         opts = []
-        if r.get("ms"):
-            opts += [("MS 1", M["p"][0], r["ms"][0]), ("MS 0", M["p"][1], r["ms"][1]), ("MS 2", M["p"][2], r["ms"][2])]
-        if r.get("ou25"):
-            opts += [("2.5 Alt", 1 - M["o25"], r["ou25"][0]), ("2.5 Üst", M["o25"], r["ou25"][1])]
-        if r.get("kg"):
-            opts += [("KG Var", M["btts"], r["kg"][0]), ("KG Yok", 1 - M["btts"], r["kg"][1])]
-        for name, p, odd in opts:
-            if odd and p >= 0.3 and p * odd - 1 >= min_ev:
+        if r.get("ms") and r.get("market"):
+            opts += [(n, M["p"][i], r["ms"][i], r["market"][i]) for i, n in enumerate(("MS 1", "MS 0", "MS 2"))]
+        mo, mk_ = devig(r.get("ou25")), devig(r.get("kg"))
+        if mo:
+            opts += [("2.5 Alt", 1 - M["o25"], r["ou25"][0], mo[0]), ("2.5 Üst", M["o25"], r["ou25"][1], mo[1])]
+        if mk_:
+            opts += [("KG Var", M["btts"], r["kg"][0], mk_[0]), ("KG Yok", 1 - M["btts"], r["kg"][1], mk_[1])]
+        for name, p, odd, q in opts:
+            if odd and p >= 0.3 and p - q <= max_gap and p * odd - 1 >= min_ev:
                 out.append((p * odd - 1, r, name, p, odd))
     out.sort(key=lambda x: -x[0])
     return out
