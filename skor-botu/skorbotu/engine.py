@@ -128,8 +128,8 @@ def analyse(events: list[dict], mk_matches: dict, hist: History, with_sidelined:
             out.append(rec)
             continue
         adj = (1.0, 1.0, 1.0, 1.0)
-        if with_sidelined:
-            side = mackolik.sidelined(m)
+        side = mackolik.sidelined(m) if with_sidelined else None
+        if side is not None:
             ha, hd, hn = absence(side["home"], *hist.season_stats(m["home"]))
             aa, ad, an = absence(side["away"], *hist.season_stats(m["away"]))
             adj = (ha, hd, aa, ad)

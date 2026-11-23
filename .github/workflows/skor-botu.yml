@@ -2,7 +2,8 @@ name: Skor tahmin botu
 
 on:
   schedule:
-    - cron: "17 6 * * *"   # her gün 09:17 (Türkiye saati)
+    - cron: "17 6 * * *"    # her gün 09:17 (Türkiye saati): bülten
+    - cron: "43 */3 * * *"  # 3 saatte bir: geçmiş maç arşivini doldurur (arşiv tamamsa hemen biter)
   pull_request:
     paths: ["skor-botu/**", ".github/workflows/skor-botu.yml"]
   workflow_dispatch:
@@ -22,7 +23,7 @@ concurrency:
 jobs:
   bulten:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: skor-botu
@@ -48,8 +49,13 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          ARGS="--backfill 900"
-          if [ "${{ inputs.dry_run }}" = "true" ] || [ "${{ github.event_name }}" = "pull_request" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ "${{ github.event.schedule }}" = "43 */3 * * *" ]; then
+            python run.py --backfill-only --backfill-minutes 25
+            exit 0
+          fi
+          ARGS="--backfill-minutes 5"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then ARGS="--dry-run --backfill-minutes 15"; fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           python run.py $ARGS
       - name: Maç arşivini kaydet
         if: always()
@@ -58,14 +64,14 @@ jobs:
           path: skor-botu/data/mackolik
           key: mackolik-${{ github.run_id }}
       - name: Tam bülteni yükle
-        if: always()
+        if: always() && github.event.schedule != '43 */3 * * *'
         uses: actions/upload-artifact@v4
         with:
           name: tahmin-bulteni
           path: skor-botu/out/*.html
           retention-days: 14
       - name: Günün tahminlerini kaydet
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.event.schedule != '43 */3 * * *'
         run: |
           git config user.name "skor-botu"
           git config user.email "skor-botu@users.noreply.github.com"

@@ -14,7 +14,7 @@ Her sabah 09:17'de (Türkiye saati) iddaa bültenindeki o günün **tüm futbol 
 | Kaynak | Ne için |
 |---|---|
 | iddaa.com bülteni | Günün maçları, oranlar, MBS |
-| Maçkolik canlı sonuçlar | Temmuz 2024'ten bu yana dünyadaki tüm maçların sonuçları (Türkiye'de Süper Lig'den 3. Lig'e, PGL ve amatöre kadar). Her maçta iddaa kodu olduğu için bülten maçlarıyla birebir eşleşir |
+| Maçkolik canlı sonuçlar | Temmuz 2025'ten bu yana dünyadaki tüm maçların sonuçları (Türkiye'de Süper Lig'den 3. Lig'e, PGL ve amatöre kadar). Her maçta iddaa kodu olduğu için bülten maçlarıyla birebir eşleşir |
 | Maçkolik maç sayfası | Sakat ve cezalı oyuncular (oynadığı maç ve gol sayısıyla) |
 | [penaltyblog](https://github.com/martineastwood/penaltyblog) | iddaa oranlarındaki kâr payını çıkarıp gerçek olasılığı hesaplamak (Shin yöntemi) |
 
@@ -39,7 +39,7 @@ Tahminler olasılıktır, kesin sonuç değildir.
 
 ## Notlar
 
-- İlk çalıştırma Temmuz 2024'ten bugüne tüm günleri indirdiği için 20–30 dakika sürebilir; sonraki günler birkaç dakikadır. Arşiv depoya değil GitHub önbelleğine yazılır; silinirse kendiliğinden yeniden indirilir.
+- Geçmiş maç arşivi (Temmuz 2025'ten bugüne) Maçkolik'i yormamak için yavaş indirilir: iş akışı 3 saatte bir 25 dakika boyunca arşivi doldurur, tamamlanınca bu çalıştırmalar 1 dakikada biter. Arşiv birkaç gün içinde dolar; o zamana kadar tahminler daha az veriyle yapılır ve mesajda uyarı çıkar. Arşiv depoya değil GitHub önbelleğine yazılır; silinirse kendiliğinden yeniden indirilir.
 - Her günün tahminleri `data/tahminler/` klasörüne kaydedilir (ileride isabet raporu için).
 - Tam bülten dosyası Telegram'a gelmese bile Actions çalıştırmasının sayfasında "tahmin-bulteni" adıyla 14 gün durur.
-- Yerelde denemek için: `pip install -r requirements.txt` ve `python run.py --dry-run --backfill 60`.
+- Yerelde denemek için: `pip install -r requirements.txt` ve `python run.py --dry-run`.

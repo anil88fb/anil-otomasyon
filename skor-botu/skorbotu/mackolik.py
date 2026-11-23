@@ -32,9 +32,13 @@ _s.headers.update({
 })
 
 
-def _get(url: str, params=None, delay: float = 0.3) -> requests.Response:
+class Blocked(RuntimeError):
+    """Maçkolik istekleri reddediyor (çok sık istek)."""
+
+
+def _get(url: str, params=None, delay: float = 1.0, tries: int = 3) -> requests.Response:
     last = None
-    for attempt in range(4):
+    for attempt in range(tries):
         try:
             r = _s.get(url, params=params, timeout=40)
             if r.status_code == 200:
@@ -43,12 +47,12 @@ def _get(url: str, params=None, delay: float = 0.3) -> requests.Response:
             last = f"HTTP {r.status_code}"
         except requests.RequestException as e:
             last = e
-        time.sleep(3 * (attempt + 1))
-    raise RuntimeError(f"Maçkolik alınamadı {url}: {last}")
+        time.sleep(15 * (attempt + 1))
+    raise Blocked(f"Maçkolik alınamadı ({last})")
 
 
-def fetch_day(d: date) -> dict:
-    r = _get(LIVESCORES, {"sports[]": "Soccer", "matchDate": d.isoformat()})
+def fetch_day(d: date, delay: float = 1.0) -> dict:
+    r = _get(LIVESCORES, {"sports[]": "Soccer", "matchDate": d.isoformat()}, delay=delay)
     return r.json()["data"]
 
 
@@ -118,24 +122,31 @@ class Store:
         with gzip.open(self.path(d), "wt", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
 
-    def update(self, today: date, start: date, budget: int) -> int:
-        """Son 3 günü yeniler, sonra eksik geçmiş günleri yeniden eskiye `budget` kadar indirir."""
-        n = 0
-        for k in range(1, 4):
-            d = today - timedelta(days=k)
-            if d >= start:
-                self.save(d, fetch_day(d)); n += 1
-        d = today - timedelta(days=4)
-        while d >= start and n < budget:
-            if not self.has(d):
-                try:
-                    self.save(d, fetch_day(d)); n += 1
-                except Exception as e:  # tek gün bozuksa atla, sonraki çalıştırmada tekrar denenir
-                    log.warning("%s indirilemedi: %s", d, e)
-            d -= timedelta(days=1)
-        missing = sum(1 for i in range((today - start).days) if not self.has(start + timedelta(days=i)))
-        log.info("Maçkolik: %d gün indirildi, arşivde eksik %d gün", n, missing)
-        return missing
+    def missing(self, today: date, start: date) -> list[date]:
+        return [d for d in (today - timedelta(days=i) for i in range(1, (today - start).days + 1)) if not self.has(d)]
+
+    def update(self, today: date, start: date, minutes: float, delay: float = 5.0, refresh: bool = True) -> int:
+        """Son 3 günü yeniler, sonra eksik geçmiş günleri yeniden eskiye doğru indirir.
+
+        Maçkolik sık isteği engellediği için istekler aralıklı yapılır, süre sınırı aşılınca ya da
+        art arda 3 hata alınınca durulur; kalan günler sonraki çalıştırmalarda tamamlanır.
+        """
+        t_end = time.monotonic() + minutes * 60
+        n = fails = 0
+        todo = self.missing(today, start)
+        if refresh:
+            todo = [today - timedelta(days=k) for k in range(1, 4)] + [d for d in todo if (today - d).days > 3]
+        for d in todo:
+            if time.monotonic() > t_end or fails >= 3:
+                break
+            try:
+                self.save(d, fetch_day(d, delay=delay)); n += 1; fails = 0
+            except Exception as e:  # sonraki çalıştırmada tekrar denenir
+                fails += 1
+                log.warning("%s indirilemedi: %s", d, e)
+        left = len(self.missing(today, start))
+        log.info("Maçkolik: %d gün indirildi, arşivde eksik %d gün", n, left)
+        return left
 
     def load(self, since: date) -> tuple[list[list], dict]:
         rows, comps = [], {}
@@ -185,13 +196,22 @@ def parse_sidelined(html: str) -> list[dict]:
     return out
 
 
-def sidelined(match: dict) -> dict[str, list[dict]]:
-    """{'home': [...], 'away': [...]} — eşleşmezse sırayla (ilk kutu ev sahibi)."""
+_sidelined_fails = 0
+
+
+def sidelined(match: dict) -> dict[str, list[dict]] | None:
+    """{'home': [...], 'away': [...]} — eşleşmezse sırayla (ilk kutu ev sahibi).
+    Sayfa alınamazsa None; art arda 3 hatadan sonra o gün başka sayfa denenmez."""
+    global _sidelined_fails
+    if _sidelined_fails >= 3:
+        return None
     try:
-        html = _get(MATCH_URL.format(slug=match["slug"], id=match["id"]), delay=0.4).text
-    except RuntimeError as e:
+        html = _get(MATCH_URL.format(slug=match["slug"], id=match["id"]), delay=1.5, tries=2).text
+        _sidelined_fails = 0
+    except Blocked as e:
+        _sidelined_fails += 1
         log.warning("Eksik oyuncu sayfası alınamadı: %s", e)
-        return {"home": [], "away": []}
+        return None
     boxes = parse_sidelined(html)
     res = {"home": [], "away": []}
     for i, b in enumerate(boxes[:2]):
