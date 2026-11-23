@@ -49,18 +49,19 @@ def noon_ts(d: date) -> int:
     return int(datetime(d.year, d.month, d.day, 12, tzinfo=mackolik.TZ).timestamp() * 1000)
 
 
-def link(source: str, matches: list[dict], archive: list[list], names: dict[str, str]) -> tuple[dict, str | None]:
+def link(source: str, matches: list[dict], archive: list[list], names: dict[str, str],
+         known: dict[str, tuple[str, set]] | None = None, leagues: set | None = None) -> tuple[dict, str | None]:
     """Bir kaynak ligin takımlarını Maçkolik kimliklerine bağlar.
 
     matches: kaynak maçları {'date','h','a','hn','an','hg','ag'}; h/a kaynaktaki takım anahtarı.
     archive: Maçkolik satırları [ts, lig, ev, dep, evGol, depGol, ...].
+    known: {maçkolik_takım: (ad, {ligler})} — arşivdeki ve bugünkü/yarınki maçlardaki takımlar (ad eşleştirmesi için).
+    leagues: lig (kupa olmayan) turnuva kimlikleri.
     Dönüş: ({kaynak_takım: maçkolik_takım}, maçkolik_lig | None)
     """
     by_day: dict[date, list] = defaultdict(list)
     for r in archive:
         by_day[mackolik.local_day(r[0])].append(r)
-    if not by_day:
-        return {}, None
     days = set(by_day)
     votes: dict[tuple, float] = defaultdict(float)
     comp_votes: Counter = Counter()
@@ -97,8 +98,45 @@ def link(source: str, matches: list[dict], archive: list[list], names: dict[str,
             mapping[s] = t
             used.add(t)
     comp = comp_votes.most_common(1)[0][0] if comp_votes else None
-    log.info("%s: %d/%d takım eşleşti (lig %s)", source, len(mapping), len(src_name), comp)
+    n_votes = len(mapping)
+    if known:
+        comp = _link_by_name(matches, src_name, mapping, used, comp, known, leagues or set())
+    log.info("%s: %d/%d takım eşleşti (%d ortak maçla, %d adla), lig %s",
+             source, len(mapping), len(src_name), n_votes, len(mapping) - n_votes, comp)
     return mapping, comp
+
+
+def _link_by_name(matches, src_name, mapping, used, comp, known, leagues):
+    """Ortak maçla eşleşmeyen, bu sezon oynayan takımları adlarından bağlar.
+    Lig biliniyorsa o ligin takımları arasında (eşik 0.55), bilinmiyorsa tüm takımlar arasında
+    çok yüksek benzerlikle (eşik 0.85) ve ikinci adaydan belirgin farkla."""
+    last = max((m["date"] for m in matches), default="")
+    if not last:
+        return comp
+    cutoff = (date.fromisoformat(last) - timedelta(days=120)).isoformat()
+    active = {t for m in matches if m["date"] >= cutoff for t in (m["h"], m["a"])}
+
+    def best(name, pool, thr):
+        sc = sorted(((sim(name, known[t][0]), t) for t in pool if t not in used), reverse=True)
+        if sc and sc[0][0] >= thr and (len(sc) == 1 or sc[0][0] - sc[1][0] >= 0.1):
+            return sc[0][1]
+        return None
+
+    if comp is None:  # lig: adı çok benzeyen takımların en çok bulunduğu lig
+        c = Counter()
+        for s in active:
+            t = best(src_name[s], known, 0.85)
+            if t:
+                c.update(x for x in known[t][1] if x in leagues)
+        if c and c.most_common(1)[0][1] >= 3:
+            comp = c.most_common(1)[0][0]
+    in_comp = [t for t, (_, cs) in known.items() if comp in cs] if comp else []
+    for s in sorted(active - set(mapping)):
+        t = (best(src_name[s], in_comp, 0.55) if in_comp else None) or best(src_name[s], known, 0.85)
+        if t:
+            mapping[s] = t
+            used.add(t)
+    return comp
 
 
 def archive_keys(archive: list[list]) -> tuple[set, set]:

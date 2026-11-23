@@ -134,3 +134,14 @@ def test_footballdata_new_format():
     txt = "Country,League,Season,Date,Time,Home,Away,HG,AG,Res\nNorway,Eliteserien,2026,01/11/2026,17:00,Molde,Brann,2,1,H\n"
     ms = footballdata.parse_csv(txt)
     assert ms[0]["h"] == "Molde" and ms[0]["hg"] == 2 and ms[0]["date"] == "2026-11-01"
+
+
+def test_linker_name_pass_for_teams_playing_today():
+    from skorbotu import linker
+    src = [{"date": "2026-11-01", "h": "Galatasaray", "a": "Fenerbahce", "hn": "Galatasaray", "an": "Fenerbahce", "hg": 1, "ag": 1},
+           {"date": "2026-11-08", "h": "Besiktas", "a": "Galatasaray", "hn": "Besiktas", "an": "Galatasaray", "hg": 0, "ag": 2},
+           {"date": "2026-11-15", "h": "Fenerbahce", "a": "Besiktas", "hn": "Fenerbahce", "an": "Besiktas", "hg": 3, "ag": 1}]
+    known = {"g": ("Galatasaray", {"UCL", "SL"}), "f": ("Fenerbahçe", {"SL"}), "b": ("Beşiktaş", {"SL"}),
+             "x": ("Galatasaray U19", {"U19"})}
+    mapping, comp = linker.link("fd-T1", src, [], {}, known, {"SL"})
+    assert comp == "SL" and mapping == {"Galatasaray": "g", "Fenerbahce": "f", "Besiktas": "b"}

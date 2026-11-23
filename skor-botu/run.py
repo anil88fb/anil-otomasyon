@@ -21,7 +21,7 @@ from skorbotu import bulletin, engine, footballdata, iddaa, linker, mackolik, te
 ROOT = Path(__file__).parent
 
 
-def past_seasons(today, since, archive, comps, names, warnings) -> list[list]:
+def past_seasons(today, since, archive, comps, names, upcoming, warnings) -> list[list]:
     """Eski sezonlar: football-data.co.uk (Avrupa + ek ligler) ve TFF (Türkiye ligleri).
     Takımlar son haftalardaki ortak maçlarla Maçkolik kimliklerine bağlanır."""
     sources: dict[str, list[dict]] = {}
@@ -39,12 +39,20 @@ def past_seasons(today, since, archive, comps, names, warnings) -> list[list]:
             logging.exception("TFF %s başarısız", name)
             warnings.append(f"TFF {name} verisi alınamadı ({type(e).__name__}).")
     keys = linker.archive_keys(archive)
+    known: dict[str, tuple[str, set]] = {}
+    for r in archive:
+        for t in (r[2], r[3]):
+            known.setdefault(t, (names.get(t, ""), set()))[1].add(r[1])
+    for m in upcoming:  # bugün ve yarın oynayacak takımlar
+        for t, n in ((m["home"], m["hn"]), (m["away"], m["an"])):
+            known.setdefault(t, (n, set()))[1].add(m["comp"])
+    known = {t: v for t, v in known.items() if v[0]}
+    leagues = {c for c, meta in comps.items() if meta[2] == "Domestic league"}
     out, linked = [], 0
     for src, ms in sources.items():
-        mapping, comp = linker.link(src, ms, archive, names)
+        mapping, comp = linker.link(src, ms, archive, names, known, leagues)
         linked += len(mapping)
-        if comp is None:
-            comps.setdefault(f"src:{src}", [src, "", "Domestic league"])
+        comps.setdefault(comp or f"src:{src}", [src, "", "Domestic league"])
         out += linker.to_rows(src, ms, mapping, comp, keys)
     logging.info("Eski sezonlar: %d kaynak lig, %d maç, %d takım Maçkolik ile eşleşti", len(sources), len(out), linked)
     return out
@@ -83,7 +91,7 @@ def main() -> int:
     comps.update(comps_today)
     logging.info("Maçkolik arşivinde %d bitmiş maç", len(rows))
     if not args.no_history:
-        rows += past_seasons(today, since, rows, comps, names, warnings)
+        rows += past_seasons(today, since, rows, comps, names, list(mk.values()), warnings)
         rows.sort(key=lambda r: r[0])
     logging.info("Modelde toplam %d geçmiş maç", len(rows))
 
