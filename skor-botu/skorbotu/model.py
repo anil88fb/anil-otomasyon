@@ -105,9 +105,11 @@ class Prediction:
         return max((("1", self.p1), ("X", self.px), ("2", self.p2)), key=lambda x: x[1])
 
 
-def predict(F: Fitted, h, a) -> Prediction:
-    lh = F.mu_h * F.att.get(h, PRIOR_ATT) * F.defe.get(a, PRIOR_DEF)
-    la = F.mu_a * F.att.get(a, PRIOR_ATT) * F.defe.get(h, PRIOR_DEF)
+def predict(F: Fitted, h, a, adj: tuple = (1.0, 1.0, 1.0, 1.0)) -> Prediction:
+    """adj: (ev hücum, ev savunma, dep hücum, dep savunma) çarpanları; savunma >1 = daha çok gol yer."""
+    h_att, h_def, a_att, a_def = adj
+    lh = F.mu_h * F.att.get(h, PRIOR_ATT) * h_att * F.defe.get(a, PRIOR_DEF) * a_def
+    la = F.mu_a * F.att.get(a, PRIOR_ATT) * a_att * F.defe.get(h, PRIOR_DEF) * h_def
     g = _grid(lh, la, RHO)
     p1 = px = p2 = btts = o15 = o25 = o35 = 0.0
     scores = []
