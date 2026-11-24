@@ -38,6 +38,11 @@ jobs:
           cache-dependency-path: skor-botu/requirements.txt
       - run: pip install -r requirements.txt pytest
       - run: python -m pytest -q tests
+      - name: Telegram ayarlarını denetle
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python check_telegram.py
       - name: Bülteni oluştur ve gönder
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
