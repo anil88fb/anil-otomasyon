@@ -1,0 +1,41 @@
+{
+ "voice": "af_kore",
+ "speed": 1.12,
+ "lines": [
+  {
+   "say": "Soak your hands, and your fingertips turn into prunes.",
+   "caption": "Prune fingers",
+   "pause_before": 0.05
+  },
+  {
+   "say": "But it's not the skin soaking up water.",
+   "caption": "Not soaking"
+  },
+  {
+   "say": "If the nerve to a finger is cut, that finger stays smooth.",
+   "caption": "Cut nerve"
+  },
+  {
+   "say": "Your nerves squeeze tiny blood vessels under the skin,",
+   "caption": "Vessels squeeze"
+  },
+  {
+   "say": "so the fingertip shrinks, and the skin buckles into ridges.",
+   "caption": "Ridges",
+   "pause_before": 0.1
+  },
+  {
+   "say": "In a 2013 test, wrinkly fingers moved wet marbles faster.",
+   "caption": "Grip test"
+  },
+  {
+   "say": "The grooves drain water, like the tread on a tire.",
+   "caption": "Tire tread"
+  },
+  {
+   "say": "Subscribe for more.",
+   "caption": "Subscribe",
+   "pause_before": 0.3
+  }
+ ]
+}

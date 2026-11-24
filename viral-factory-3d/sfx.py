@@ -5,7 +5,7 @@ video can sound different. Keys (all optional):
   bpm, chords (list of MIDI triads, one per bar), pad (gain), arp (gain), kick (gain),
   pluck ("sine"|"bell"|"square"), arp_pattern (list of chord-tone indices, 8 per bar,
   values >=3 mean +octave), hat (gain), music_gain, duck,
-  fx: [{"type": whoosh|ding|boom|riser|bubbles|ping|splash|rush|clunk|chime,
+  fx: [{"type": whoosh|ding|boom|riser|bubbles|ping|splash|rush|clunk|chime|file ("name": a file in assets/sfx),
         "seg": i, "at": seconds from segment start (negative = before), "gain": g,
         "freq": f (ding/ping), "dur": d (riser/rush)}]
   whoosh_all (gain, whoosh before every segment change; default 0.35)
@@ -108,7 +108,12 @@ def chime():
     return out
 GEN = dict(whoosh=lambda o: whoosh(), ding=lambda o: ding(o.get("freq", 1320)), ping=lambda o: ping(o.get("freq", 1480)),
            boom=lambda o: boom(), riser=lambda o: riser(o.get("dur", 1.5)), bubbles=lambda o: bubbles(o.get("dur", 2.5)),
-           splash=lambda o: splash(), rush=lambda o: rush(o.get("dur", 3.0)), clunk=lambda o: clunk(), chime=lambda o: chime())
+           splash=lambda o: splash(), rush=lambda o: rush(o.get("dur", 3.0)), clunk=lambda o: clunk(), chime=lambda o: chime(),
+           file=lambda o: sample(o["name"]))
+def sample(name):  # bundled SFX from assets/sfx/<name>.mp3 (hyperframes-media library)
+    import subprocess
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", f"{ROOT}/assets/sfx/{name}.mp3", "-ac", "1", "-ar", str(sr), "-f", "f32le", "-"], capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype=np.float32).astype(np.float64)
 
 if cfg is None:  # original v01 plan
     plan = [dict(type="ding", seg=i, at=0.15, gain=0.22, freq=1320 if i < 5 else 1760) for i in range(1, 6)]

@@ -15,8 +15,8 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 
 - `tts.py`: `script.json` → `voice.wav` + `timing.json` (segment start/end; scene timing follows the voice).
 - `render.py`: serves this folder on localhost, calls `renderAt(t)` per frame, pipes JPEGs to ffmpeg. ~0.35 s/frame on 2 CPUs.
-- `sfx.py`: music (chord pad, arpeggio, kick, hat) ducked under the voice, plus effects (whoosh, ding, ping, splash, rush, clunk, chime, riser, boom, bubbles). Put a `music.json` in the video folder to set bpm, chords, instrument and the effect plan per segment (see the docstring); without it the v01 plan is used. The second argument is a random seed.
-- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka, Oswald, JetBrains Mono, Baloo 2, Rubik, Lilita One, Nunito (`/node_modules/@fontsource/<name>/files/...`).
+- `sfx.py`: music (chord pad, arpeggio, kick, hat) ducked under the voice, plus effects (whoosh, ding, ping, splash, rush, clunk, chime, riser, boom, bubbles). Put a `music.json` in the video folder to set bpm, chords, instrument and the effect plan per segment (see the docstring); effects of type `file` play a sample from `assets/sfx/` (copied from the hyperframes-media SFX library, see its CREDITS.md); without it the v01 plan is used. The second argument is a random seed.
+- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka, Oswald, JetBrains Mono, Baloo 2, Rubik, Lilita One, Nunito, Archivo Black, Anton, DM Serif Display, Bungee (`/node_modules/@fontsource/<name>/files/...`).
 
 ## Videos made
 
@@ -37,6 +37,9 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 | videos/v13-ears-pop-plane | Why Do Your Ears Pop on a Plane? | turquoise sky over a cloud sea, white/coral airliner climbing, then a see-through ear model (canal, bulging eardrum, air pocket, Eustachian tube) in a plum studio; boarding-pass cards + pressure gauges, Rubik | af_river |
 | videos/v14-how-submarines-dive | How Do Submarines Dive? | tropical lagoon, yellow see-through sub with ballast tanks flooding/blowing, vent bubbles, hydroplanes, breach splash; navy stickers with orange dots + depth dial, Lilita One | am_fenrir |
 | videos/v15-penguin-5-facts | 5 Facts About Penguins | Antarctic ice shelf under an aurora, emperor colony, deep dive, above/below camouflage swing, salt drip, dad with egg in a snowstorm, low-poly globe with the Arctic crossed out; frosted ice cards, Nunito | bf_lily |
+| videos/v16-wrinkly-fingers | Why Do Fingers Wrinkle in Water? | mint-tiled bathroom, hand rising from the bath with fingertips buckling into ridges, x-ray finger with cut nerve, skin-slab cutaway (vessels squeezed), wet-marble test, tire tread in rain; soap-bubble labels + bubble-wipe cuts, Archivo Black, coral highlight | af_kore |
+| videos/v17-hiccups | Why Do We Hiccup? | late-night retro diner (plum/teal/mustard, neon), guy with a fizzy soda; x-ray glass bust (lungs, diaphragm dome, stomach, phrenic nerves, vocal cords), womb with hiccuping baby, Iowa farm at night with 1922→1990 counter; neon-sign labels + iris cuts, DM Serif Display + Anton | am_puck |
+| videos/v18-lightning-5-facts | 5 Facts About Lightning | violet prairie storm with seeded bolts, night globe flickering 44×/s, bolt vs Sun bar, shock rings bending grass, art-deco tower hit over a lit city, porch flash-to-thunder count; radar-panel cards with bolt badge, Bungee + Space Grotesk, orange accent | bm_daniel |
 
 ## Channel rules (standing decisions)
 

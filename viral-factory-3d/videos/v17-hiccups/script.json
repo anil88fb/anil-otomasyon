@@ -1,0 +1,13 @@
+{
+ "voice": "am_puck",
+ "speed": 1.12,
+ "lines": [
+  {"say": "Hic! That sound is your vocal cords slamming shut.", "caption": "Hic", "pause_before": 0.05},
+  {"say": "But it starts lower, in your diaphragm, the dome of muscle under your lungs.", "caption": "Diaphragm"},
+  {"say": "Eat too fast or gulp a fizzy drink, and the nerves that run it get irritated.", "caption": "Irritated"},
+  {"say": "The diaphragm twitches, you suck in air, and the vocal cords snap closed. Hic!", "caption": "Snap"},
+  {"say": "Babies even hiccup before they're born.", "caption": "Babies"},
+  {"say": "And one farmer, Charles Osborne, had hiccups for 68 years.", "caption": "68 years"},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3}
+ ]
+}

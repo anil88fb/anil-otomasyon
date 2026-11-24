@@ -7,3 +7,4 @@ node_modules/
 **/timing.json
 **/f_*.jpg
 **/fsheet.jpg
+**/*.sheet.png

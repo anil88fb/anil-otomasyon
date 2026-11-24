@@ -1,0 +1,32 @@
+{
+ "voice": "bm_daniel",
+ "speed": 1.16,
+ "lines": [
+  {
+   "say": "Five facts about lightning. One: it hits Earth about 44 times every second.",
+   "caption": "44 per second",
+   "pause_before": 0.05
+  },
+  {
+   "say": "Two: a bolt is about 50,000 degrees Fahrenheit. Five times hotter than the Sun's surface.",
+   "caption": "Hotter than the Sun"
+  },
+  {
+   "say": "Three: thunder is the air around the bolt exploding from that heat.",
+   "caption": "Thunder"
+  },
+  {
+   "say": "Four: it does strike twice. The Empire State Building is hit about 20 times a year.",
+   "caption": "Strikes twice"
+  },
+  {
+   "say": "Five: count the seconds to the thunder, divide by three. That's the distance in kilometers.",
+   "caption": "Count it"
+  },
+  {
+   "say": "Subscribe for more.",
+   "caption": "Subscribe",
+   "pause_before": 0.3
+  }
+ ]
+}
