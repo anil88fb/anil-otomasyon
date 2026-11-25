@@ -34,4 +34,4 @@ Note (24 Nov): the nuxtjs repo could not be attached in the scheduled run (no ad
 | date (New York) | time (New York) | = Istanbul | video | folder | status |
 |---|---|---|---|---|---|
 | 27 Nov 2026 (Fri) | 19:00 | 28 Nov 03:00 | Why Do Onions Make You Cry? | videos/v19-onion-tears | scheduled by Claude (https://www.youtube.com/watch?v=2IjegBQ5EAw) |
-| 28 Nov 2026 (Sat) | 13:00 | 28 Nov 21:00 | Why Do You Get Brain Freeze? | videos/v20-brain-freeze | sent to user for upload (vidIQ free plan: 3 YouTube uploads/day used up; vidIQ draft f8c6a374 ready) |
+| 28 Nov 2026 (Sat) | 13:00 | 28 Nov 21:00 | Why Do You Get Brain Freeze? | videos/v20-brain-freeze | scheduled by Claude (https://www.youtube.com/watch?v=94dj7UPs0h4) |
