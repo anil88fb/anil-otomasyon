@@ -16,6 +16,14 @@ pip install --break-system-packages fonttools opencv-python-headless pillow nump
 3. Copy an example from `examples/` to `/home/claude/shorts/vN/make.py`, change `D`, `LINES`, palette and the 6 scenes.
 4. Preview: `python3 make.py shot 2 6 11 16 21 27` → `sheet.png` (look at it, fix overlaps/clipping).
 5. Render: `python3 make.py full` → `/home/claude/<name>.mp4` (video + voice + generated music + SFX).
+6. Check before upload: `python3 shorts-tools/kontrol.py /home/claude/<name>.mp4 --duzelt --sikistir`
+   (fixes loudness to -14 LUFS, shrinks the file so it stays well under GitHub's 100 MB limit).
+
+Optional helpers from `shorts-tools/` (run `bash shorts-tools/kurulum.sh` once per session):
+- Real SFX instead of synthetic beeps: `earshot make "a soft pop as a bubble appears" -o vN/sfx/pop.ogg`.
+- Cut on the music: `python3 shorts-tools/ritim.py music.wav --cikti vN/beats.json`, move scene changes to the nearest beat.
+- Captions/timing from the voice: `python3 shorts-tools/zamanla.py vN/vo/l1.wav --metin line1.txt --dil en`.
+- Cut-out images (user photos, objects): `python3 shorts-tools/dekupe.py image.png`.
 
 ## Channel rules
 - English only. Formats: body/everyday "Why…?", "What if…?", "How to build…" (problem → fix chain).
