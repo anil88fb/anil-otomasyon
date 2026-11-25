@@ -28,3 +28,10 @@ Pick the first free slot below the last filled one. Status: `scheduled by Claude
 Other topics already made (avoid repeats): octopus, elevators, honeybees, deepest hole, hot air balloon, sharks (videos/v06, v07, v09–v12).
 
 Note (24 Nov): the nuxtjs repo could not be attached in the scheduled run (no add_repo tool, access denied), so the daily "5 facts" Short was built here with the viral-factory-3d engine instead of nuxtjs shorts/DAILY.md.
+
+## New York slots (from 27 Nov 2026)
+
+| date (New York) | time (New York) | = Istanbul | video | folder | status |
+|---|---|---|---|---|---|
+| 27 Nov 2026 (Fri) | 19:00 | 28 Nov 03:00 | Why Do Onions Make You Cry? | videos/v19-onion-tears | PENDING |
+| 28 Nov 2026 (Sat) | 13:00 | 28 Nov 21:00 | Why Do You Get Brain Freeze? | videos/v20-brain-freeze | PENDING |

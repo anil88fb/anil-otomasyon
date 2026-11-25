@@ -1,0 +1,13 @@
+{
+ "voice": "bm_fable",
+ "speed": 1.18,
+ "lines": [
+  {"say": "Cutting an onion makes you cry, and it's a chemical trap.", "caption": "Trap", "pause_before": 0.05},
+  {"say": "Every slice rips open thousands of tiny cells.", "caption": "Cells"},
+  {"say": "Two chemicals that were kept apart mix, and an enzyme turns them into a gas.", "caption": "Gas"},
+  {"say": "That gas drifts up and stings the nerves in your eyes.", "caption": "Eyes"},
+  {"say": "So your tear glands flood the eye to wash it away.", "caption": "Tears"},
+  {"say": "Tip: chill the onion and use a sharp knife. Less gas, fewer tears.", "caption": "Tip"},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3}
+ ]
+}

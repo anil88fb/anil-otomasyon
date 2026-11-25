@@ -16,7 +16,7 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 - `tts.py`: `script.json` → `voice.wav` + `timing.json` (segment start/end; scene timing follows the voice).
 - `render.py`: serves this folder on localhost, calls `renderAt(t)` per frame, pipes JPEGs to ffmpeg. ~0.35 s/frame on 2 CPUs.
 - `sfx.py`: music (chord pad, arpeggio, kick, hat) ducked under the voice, plus effects (whoosh, ding, ping, splash, rush, clunk, chime, riser, boom, bubbles). Put a `music.json` in the video folder to set bpm, chords, instrument and the effect plan per segment (see the docstring); effects of type `file` play a sample from `assets/sfx/` (copied from the hyperframes-media SFX library, see its CREDITS.md); without it the v01 plan is used. The second argument is a random seed.
-- Fonts installed by setup: Montserrat, Bebas Neue, Space Grotesk, Fredoka, Oswald, JetBrains Mono, Baloo 2, Rubik, Lilita One, Nunito, Archivo Black, Anton, DM Serif Display, Bungee (`/node_modules/@fontsource/<name>/files/...`).
+- Fonts installed by setup: Playfair Display, Barlow Condensed, Sora, Montserrat, Bebas Neue, Space Grotesk, Fredoka, Oswald, JetBrains Mono, Baloo 2, Rubik, Lilita One, Nunito, Archivo Black, Anton, DM Serif Display, Bungee (`/node_modules/@fontsource/<name>/files/...`).
 
 ## Videos made
 
@@ -40,6 +40,8 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 | videos/v16-wrinkly-fingers | Why Do Fingers Wrinkle in Water? | mint-tiled bathroom, hand rising from the bath with fingertips buckling into ridges, x-ray finger with cut nerve, skin-slab cutaway (vessels squeezed), wet-marble test, tire tread in rain; soap-bubble labels + bubble-wipe cuts, Archivo Black, coral highlight | af_kore |
 | videos/v17-hiccups | Why Do We Hiccup? | late-night retro diner (plum/teal/mustard, neon), guy with a fizzy soda; x-ray glass bust (lungs, diaphragm dome, stomach, phrenic nerves, vocal cords), womb with hiccuping baby, Iowa farm at night with 1922→1990 counter; neon-sign labels + iris cuts, DM Serif Display + Anton | am_puck |
 | videos/v18-lightning-5-facts | 5 Facts About Lightning | violet prairie storm with seeded bolts, night globe flickering 44×/s, bolt vs Sun bar, shock rings bending grass, art-deco tower hit over a lit city, porch flash-to-thunder count; radar-panel cards with bolt badge, Bungee + Space Grotesk, orange accent | bm_daniel |
+| videos/v19-onion-tears | Why Do Onions Make You Cry? | REALISM look: dark slate kitchen, walnut board, steel chef's knife halving a golden onion (speed-ramp slow-mo chop), zoom-through the cut face into a macro wall of onion cells a giant blade bursts, amber + violet chemicals mixing into the tear gas (freeze-frame label), pull-back reveal of a wet eye with nerve sparks and welling tears, whip-pan back to a frosted onion with a checklist; cream editorial tags with a violet tick, Playfair Display italic + Barlow Condensed, chive-green accent | bm_fable |
+| videos/v20-brain-freeze | Why Do You Get Brain Freeze? | REALISM look: sunny seaside café table, waffle cone with melting strawberry + mint-choc scoops, vertigo dolly-zoom hook with frost creeping in, ice-wipe into an anatomy cutaway (translucent palate block, vessels that squeeze then swell, frost crystals), wide orbit up the trigeminal nerve with pain pulses to a brain whose front lights red, camcorder digital-zoom HUD as the tongue presses up; frosted-glass pills, Sora, icy-blue accent | af_aoede |
 
 ## Channel rules (standing decisions)
 
@@ -51,7 +53,7 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 
 ## Schedule
 
-`SCHEDULE.md` lists every posting slot and its status; take the first free 15:00/21:00 Istanbul slot.
+`SCHEDULE.md` lists every posting slot and its status; take the first free 13:00/19:00 New York slot (see the table there).
 
 Note: `npm i --no-save <pkg>` prunes other unsaved packages (three.js disappears); install every package in one command as `setup.sh` does.
 

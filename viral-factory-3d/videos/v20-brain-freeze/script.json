@@ -1,0 +1,13 @@
+{
+ "voice": "af_aoede",
+ "speed": 1.12,
+ "lines": [
+  {"say": "Brain freeze! But your brain isn't actually freezing.", "caption": "Brain freeze", "pause_before": 0.05},
+  {"say": "Ice cream chills the roof of your mouth and the blood vessels right above it.", "caption": "Roof"},
+  {"say": "They squeeze tight, then suddenly swell back open.", "caption": "Swell"},
+  {"say": "That rush sets off the trigeminal nerve, your face's pain wire.", "caption": "Nerve"},
+  {"say": "Your brain gets the alarm and blames your forehead.", "caption": "Forehead"},
+  {"say": "The fix: press your tongue to the roof of your mouth to warm it up.", "caption": "Fix"},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3}
+ ]
+}
