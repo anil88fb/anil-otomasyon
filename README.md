@@ -4,7 +4,7 @@ Anıl Otomasyon
 
 ## Claude becerileri
 
-`.claude/skills/` klasöründe 88 beceri var. Claude Code bu depoda açıldığında bunları otomatik olarak tanır. Aynı beceriler `anil-otomasyon` eklentisi olarak Claude hesabına da yüklüdür (docx, pdf ve xlsx hariç; bunlar Claude'da yerleşik).
+`.claude/skills/` klasöründe 91 beceri var. Claude Code bu depoda açıldığında bunları otomatik olarak tanır. Aynı beceriler `anil-otomasyon` eklentisi olarak Claude hesabına da yüklüdür (docx, pdf ve xlsx hariç; bunlar Claude'da yerleşik).
 
 | Beceri | Kaynak |
 |---|---|
@@ -30,6 +30,7 @@ Anıl Otomasyon
 | `dispatching-parallel-agents` | obra/superpowers |
 | `docx` | anthropics/skills |
 | `domain-name-brainstormer` | ComposioHQ/awesome-claude-skills |
+| `earshot` | Leonxlnx/earshot |
 | `eas-app-stores` | expo/skills |
 | `executing-plans` | obra/superpowers |
 | `expo-web-to-native` | expo/skills |
@@ -57,6 +58,7 @@ Anıl Otomasyon
 | `memory-engineering` | alirezarezvani/claude-skills |
 | `mobile-release` | alirezarezvani/claude-skills |
 | `modern-python` | trailofbits/skills |
+| `motion-design` | LottieFiles/motion-design-skill |
 | `moviepy` | digitalsamba/claude-code-video-toolkit |
 | `music-to-video` | calesthio/openmontage |
 | `nodejs-backend-patterns` | wshobson/agents |
@@ -87,6 +89,7 @@ Anıl Otomasyon
 | `systematic-debugging` | obra/superpowers |
 | `test-driven-development` | obra/superpowers |
 | `transformers-js` | huggingface/skills |
+| `turkish-anti-ai-skill` | yucezerey/turkish-anti-ai-skill |
 | `video-content-strategist` | alirezarezvani/claude-skills |
 | `video-design` | digitalsamba/claude-code-video-toolkit |
 | `video-downloader` | ComposioHQ/awesome-claude-skills |
@@ -105,3 +108,8 @@ Anıl Otomasyon
 - youtube-stats, video-design, parody-short ve moviepy becerilerinin kullandığı araç dosyaları, kaynak deponun ana klasöründen becerinin kendi `tools/` klasörüne kopyalandı.
 - hyperframes-animation içindeki iki büyük örnek video (36 MB) hiçbir yerde kullanılmadığı için çıkarıldı.
 - Remotion ticari kullanımda belirli büyüklüğün üzerindeki şirketler için ücretli lisans ister.
+- `earshot` becerisi `earshot` komutunu kullanır: `pip install "earshot @ git+https://github.com/Leonxlnx/earshot"` (shorts-tools/kurulum.sh bunu yapar). Model indirmez, tamamen çevrimdışı çalışır.
+
+## Shorts araçları
+
+`shorts-tools/` klasöründe açık kaynak projelere dayanan üretim araçları var: çevrimdışı Whisper ile seslendirme zamanlama ve altyazı, müzik vuruşu bulma, arka plan kaldırma, yükleme öncesi video denetimi (ses seviyesi, boyut, kesme sıklığı). Ayrıntı: [shorts-tools/README.md](shorts-tools/README.md).
