@@ -1,6 +1,6 @@
 # "Why?" posting schedule
 
-Slots: 15:00 and 21:00 Istanbul (UTC+3) for the 3D Shorts; the daily "5 facts" Short goes out Mon–Fri 18:00 / Sat–Sun 11:00 America/New_York.
+Slots (from 25 Nov 2026, owner's decision): 2 videos a day in total, at 13:00 and 19:00 America/New_York (US peak hours; = 21:00 and 03:00 next day Istanbul while New York is on EST). The separate daily "5 facts" Short is dropped. Slots already booked before this change stay as they are; the first new slot is 27 Nov 19:00 New York (= 28 Nov 03:00 Istanbul).
 Pick the first free slot below the last filled one. Status: `scheduled by Claude` (uploaded + scheduled via vidIQ), `sent to user for upload`, or `published`.
 
 | date (Istanbul) | time (Istanbul) | video | folder | status |

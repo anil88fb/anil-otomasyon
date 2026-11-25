@@ -45,7 +45,8 @@ python3 render.py videos/<slug> stills 2,10,20   # check frames before the full 
 
 - English, plain titles (no clickbait add-ons), no looping endings.
 - Each video gets its own look, palette, voice and music: change `voice` in script.json (af_heart, am_michael, bf_emma, bm_george, am_adam, af_bella …), the scene and the chord set in `sfx.py`.
-- 2 videos a day at 15:00 and 21:00 Istanbul, uploaded and scheduled through vidIQ.
+- 2 videos a day in total (no separate daily "5 facts" Short from 25 Nov 2026), at the US peak hours 13:00 and 19:00 America/New_York (= 21:00 and 03:00 Istanbul in winter), uploaded and scheduled through vidIQ.
+- Realistic look from v19 on: follow `REALISM.md` (PBR materials, environment reflections, soft shadows, light bloom, real camera moves).
 - Facts must be checked with a web search before narration.
 
 ## Schedule
