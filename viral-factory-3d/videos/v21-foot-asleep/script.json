@@ -1,0 +1,13 @@
+{
+ "voice": "am_eric",
+ "speed": 1.04,
+ "lines": [
+  {"say": "Your foot fell asleep? Here's what's really happening.", "caption": "Asleep", "pause_before": 0.05},
+  {"say": "Sitting on your leg squeezes a nerve, and the blood vessels feeding it.", "caption": "Squeeze"},
+  {"say": "The squeezed nerve stops sending signals, so your foot goes numb.", "caption": "Numb"},
+  {"say": "Then you stand up, and the pressure lets go.", "caption": "Release"},
+  {"say": "The nerve wakes up and fires a burst of random signals.", "caption": "Burst"},
+  {"say": "Your brain reads that static as pins and needles.", "caption": "Pins"},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3}
+ ]
+}

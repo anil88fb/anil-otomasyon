@@ -1,0 +1,13 @@
+{
+ "voice": "af_jessica",
+ "speed": 1.1,
+ "lines": [
+  {"say": "A microwave heats food with no flame at all. Here's how.", "caption": "No flame", "pause_before": 0.05},
+  {"say": "Inside is a magnetron. It fires invisible microwaves into the box.", "caption": "Magnetron"},
+  {"say": "The metal walls bounce them around, and the mesh in the door keeps them in.", "caption": "Walls"},
+  {"say": "Water molecules in your food twist back and forth, billions of times a second.", "caption": "Water"},
+  {"say": "All that jiggling rubs together, and that friction is heat.", "caption": "Heat"},
+  {"say": "The waves leave hot and cold spots, so the plate spins.", "caption": "Spin"},
+  {"say": "Subscribe for more.", "caption": "Subscribe", "pause_before": 0.3}
+ ]
+}
